@@ -24,8 +24,8 @@ class HelloWorldTest {
 
     @Test
     public void greeting() throws Exception {
-    String stringVar = helloWorld.sayHello().send();
-    Assertions.assertEquals("Hello World!", stringVar);
+        String stringVar = helloWorld.sayHello().send();
+        Assertions.assertEquals("Hello World!", stringVar);
     }
 
 }
