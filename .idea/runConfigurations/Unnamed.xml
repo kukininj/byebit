@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Unnamed" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="org.web3j.codegen.SolidityFunctionWrapperGenerator" />
+    <module name="ByeBit" />
+    <option name="PROGRAM_PARAMETERS" value="-o app/src/test/java -a app/src/test/java/com/example/byebit/web3j/hello_world/HelloWorld.abi -b app/src/test/java/com/example/byebit/web3j/hello_world/HelloWorld.bin -p com.example.byebit" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
