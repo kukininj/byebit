@@ -1,8 +1,4 @@
 plugins {
-//    id 'java'
-    // id 'org.jetbrains.kotlin.jvm' version '2.1.0'
-//    id 'application'
-    id "com.github.johnrengelman.shadow" version "8.1.1"
     id 'org.web3j' version '4.14.0'
 }
 
@@ -48,40 +44,8 @@ dependencies {
     implementation "org.web3j:web3j-evm:$web3jVersion"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
-
-    implementation "org.hyperledger.besu:plugin-api:$besuPluginVersion"
-    implementation "org.hyperledger.besu.internal:besu:$besuInternalVersion"
-    implementation "org.hyperledger.besu.internal:api:$besuInternalVersion"
-    implementation "org.hyperledger.besu:evm:$besuPluginVersion"
-    implementation "org.hyperledger.besu.internal:config:$besuInternalVersion"
-    implementation "org.hyperledger.besu.internal:core:$besuInternalVersion"
-    implementation "org.hyperledger.besu.internal:crypto:$besuInternalCryptoVersion"
-    implementation "org.hyperledger.besu.internal:rlp:$besuInternalVersion"
-    implementation "org.hyperledger.besu.internal:kvstore:$besuInternalVersion"
-    implementation "org.hyperledger.besu.internal:metrics-core:$besuInternalVersion"
-    implementation "org.hyperledger.besu.internal:trie:$besuInternalVersion"
-    implementation "org.hyperledger.besu.internal:util:$besuInternalVersion"
-    implementation "org.hyperledger.besu:bls12-381:$besuBlsVersion"
-    implementation "org.hyperledger.besu:secp256k1:$besuCryptoDepVersion"
 }
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'com.example.contracts',
-                'Multi-Release':'true'
-        )
-    }
-}
-
-// application {
-//     mainClassName = 'org.web3j.Web3App'
-// }
 
 test {
     useJUnitPlatform()
-}
-
-shadowJar {
-    zip64 = true
 }
