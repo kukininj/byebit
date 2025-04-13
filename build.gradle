@@ -2,24 +2,8 @@
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
-    id "org.web3j" version "4.14.0"
 }
 
 repositories {
     mavenCentral()
 }
-
-dependencies {
-    implementation("org.web3j:core:4.12.3-android")
-}
-
-web3j {
-    generatedPackageName = 'org.example.contracts.generated'
-    excludedContracts = ['Mortal']
-}
-
-node {
-    workDir = file("${project.projectDir}/.gradle/nodejs")
-    nodeProjectDir = file("${project.projectDir}")
-}
-

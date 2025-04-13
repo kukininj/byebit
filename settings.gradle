@@ -16,8 +16,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
+        maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
     }
 }
 
 rootProject.name = "ByeBit"
 include ':app'
+include ':contracts'

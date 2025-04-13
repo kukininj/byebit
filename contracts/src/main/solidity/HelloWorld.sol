@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20; // Specifies the compiler version
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.7.0;
 
 /**
  * @title HelloWorld
