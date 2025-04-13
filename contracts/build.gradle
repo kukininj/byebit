@@ -20,7 +20,7 @@ repositories {
 }
 
 web3j {
-    generatedPackageName = 'org.web3j.generated.contracts'
+    generatedPackageName = 'com.example.contracts.generated'
     excludedContracts = ['Mortal']
 }
 
