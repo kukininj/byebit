@@ -29,10 +29,22 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+
+    // https://stackoverflow.com/a/68934967
+    testOptions {
+        unitTests.all {
+            useJUnitPlatform()
+        }
+    }
 }
 
 dependencies {
+    implementation project(":contracts")
+
     implementation "org.web3j:core:4.12.3"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.2'
 
     implementation libs.appcompat
     implementation libs.material
@@ -41,8 +53,7 @@ dependencies {
     implementation libs.lifecycle.viewmodel.ktx
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
-    testImplementation libs.junit
+//    testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 }
-

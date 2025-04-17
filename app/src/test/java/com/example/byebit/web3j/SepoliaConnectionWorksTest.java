@@ -1,8 +1,8 @@
 package com.example.byebit.web3j;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.web3j.protocol.Web3j;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
@@ -11,7 +11,11 @@ import org.web3j.protocol.http.HttpService;
 
 import java.math.BigInteger;
 
-public class SepoliaConnectionWorks {
+/**
+ * <a href="https://docs.metamask.io/services/reference/ethereum/json-rpc-methods/">dokumentacja json-rpc</a>
+ */
+public class SepoliaConnectionWorksTest {
+
     @Test
     public void connectionWorks() {
         Web3j web3j = Web3j.build(new HttpService("https://sepolia.drpc.org"));
@@ -23,9 +27,9 @@ public class SepoliaConnectionWorks {
 
             System.out.println(blockNumber);
 
-            Assert.assertTrue(blockNumber.compareTo(BigInteger.ONE) > 0);
+            Assertions.assertTrue(blockNumber.compareTo(BigInteger.ONE) > 0);
         } catch (Exception e) {
-            Assert.fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 
@@ -43,9 +47,9 @@ public class SepoliaConnectionWorks {
 
             System.out.println(balance);
 
-            Assert.assertTrue(balance.compareTo(BigInteger.ZERO) > 0);
+            Assertions.assertTrue(balance.compareTo(BigInteger.ZERO) > 0);
         } catch (Exception e) {
-            Assert.fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
     }
 }

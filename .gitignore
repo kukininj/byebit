@@ -14,3 +14,4 @@
 .cxx
 local.properties
 /contracts/build/
+/app/src/test/resources/test_config.properties

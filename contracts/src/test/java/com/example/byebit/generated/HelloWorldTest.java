@@ -1,4 +1,4 @@
-package com.example.contracts.generated;
+package com.example.byebit.generated;
 
 import java.lang.Exception;
 import java.lang.String;
