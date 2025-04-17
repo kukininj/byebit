@@ -17,12 +17,15 @@ import java.util.Properties;
  */
 public class TestConfig {
 
+    // --- Public Static Final fields for tests ---
+    public static final String TEST_WALLET_ADDRESS;
+    public static final String TEST_WALLET_PRIVATE_KEY;
+    public static final String SEPOLIA_RPC_URL;
+
+
     private static final String PROPERTIES_FILE = "test_config.properties";
     private static final Properties properties = new Properties();
 
-    // --- Public Static Final fields for your keys ---
-    public static final String TEST_WALLET_ADDRESS;
-    public static final String TEST_WALLET_PRIVATE_KEY;
     // Add more static final fields for other keys if needed
 
     // --- Static Initializer Block ---
@@ -42,6 +45,7 @@ public class TestConfig {
             // Load individual properties into the static final fields
             TEST_WALLET_ADDRESS = loadProperty("TEST_WALLET_ADDRESS");
             TEST_WALLET_PRIVATE_KEY = loadProperty("TEST_WALLET_PRIVATE_KEY");
+            SEPOLIA_RPC_URL = loadProperty("SEPOLIA_RPC_URL");
             // Load other properties here...
 
             // Optional: Log success or loaded keys (avoid logging actual secrets in production logs)

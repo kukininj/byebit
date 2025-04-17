@@ -18,7 +18,7 @@ public class SepoliaConnectionWorksTest {
 
     @Test
     public void connectionWorks() {
-        Web3j web3j = Web3j.build(new HttpService("https://sepolia.drpc.org"));
+        Web3j web3j = Web3j.build(new HttpService(TestConfig.SEPOLIA_RPC_URL));
 
         try {
             Request<?, EthBlockNumber> ethBlockNumberRequest = web3j.ethBlockNumber();
@@ -35,7 +35,7 @@ public class SepoliaConnectionWorksTest {
 
     @Test
     public void checkBalanceTest() {
-        Web3j web3j = Web3j.build(new HttpService("https://sepolia.drpc.org"));
+        Web3j web3j = Web3j.build(new HttpService(TestConfig.SEPOLIA_RPC_URL));
 
         try {
             Request<?, EthGetBalance> ethGetBalanceRequest = web3j.ethGetBalance(

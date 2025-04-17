@@ -30,7 +30,7 @@ public class RunContractTest {
 
     @BeforeAll
     public static void load() throws IOException {
-        web3j = Web3j.build(new HttpService("https://sepolia.drpc.org"));
+        web3j = Web3j.build(new HttpService(TestConfig.SEPOLIA_RPC_URL));
         transactionManager = new RawTransactionManager(
                 web3j,
                 Credentials.create(TestConfig.TEST_WALLET_PRIVATE_KEY)
