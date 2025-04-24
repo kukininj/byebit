@@ -17,7 +17,7 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import java.io.IOException;
 
 
-@Disabled
+//@Disabled
 public class RunContractTest {
 
     private static HelloWorld helloWorld;
