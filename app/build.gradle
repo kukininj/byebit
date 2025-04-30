@@ -16,6 +16,17 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    packaging {
+        resources {
+            it.excludes += 'META-INF/INDEX.LIST'
+            it.excludes += 'META-INF/DEPENDENCIES'
+            it.excludes += 'META-INF/FastDoubleParser-LICENSE'
+            it.excludes += 'META-INF/FastDoubleParser-NOTICE'
+            it.excludes += 'META-INF/io.netty.versions.properties'
+            it.excludes += 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -23,8 +34,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     buildFeatures {
         viewBinding true
@@ -42,9 +53,12 @@ android {
 dependencies {
     implementation project(":contracts")
 
+    implementation "androidx.room:room-runtime:2.7.1"
     implementation "org.web3j:core:4.12.3"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.2'
+
+    annotationProcessor "androidx.room:room-compiler:2.7.1"
 
     implementation libs.appcompat
     implementation libs.material
