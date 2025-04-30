@@ -3,26 +3,44 @@ package com.example.byebit.ui.dashboard;
 import android.app.Application;
 
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+import android.app.Application;
 
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+// Remove MutableLiveData if no longer needed
+// import androidx.lifecycle.MutableLiveData;
+
+import com.example.byebit.domain.WalletHandle; // Import WalletHandle
 import com.example.byebit.repository.WalletRepository;
+
+import java.util.List; // Import List
 
 public class DashboardViewModel extends AndroidViewModel {
 
     private final WalletRepository walletRepository;
+    private final LiveData<List<WalletHandle>> savedWallets; // LiveData for wallets
 
-    private final MutableLiveData<String> mText;
+    // Remove mText if not used elsewhere
+    // private final MutableLiveData<String> mText;
 
     public DashboardViewModel(Application application) {
         super(application);
         walletRepository = new WalletRepository(application);
-        mText = new MutableLiveData<>();
-        mText.setValue("This is dashboard fragment");
+        // Initialize savedWallets by getting LiveData from the repository
+        savedWallets = walletRepository.getSavedWallets();
+
+        // Remove placeholder text initialization
+        // mText = new MutableLiveData<>();
+        // mText.setValue("This is dashboard fragment");
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    // Getter for the wallet list LiveData
+    public LiveData<List<WalletHandle>> getSavedWallets() {
+        return savedWallets;
     }
+
+    // Remove getText() if mText is removed
+    // public LiveData<String> getText() {
+    //     return mText;
+    // }
 }

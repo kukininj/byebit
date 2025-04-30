@@ -5,6 +5,9 @@ import android.content.Context;
 import com.example.byebit.config.AppDatabase;
 import com.example.byebit.dao.WalletHandleDao;
 import com.example.byebit.config.AppDatabase;
+import androidx.lifecycle.LiveData; // Import LiveData
+
+import com.example.byebit.config.AppDatabase;
 import com.example.byebit.dao.WalletHandleDao;
 import com.example.byebit.domain.WalletHandle;
 
@@ -31,11 +34,14 @@ public class WalletRepository {
         this.walletsDir = context.getFilesDir();
     }
 
-    public List<WalletHandle> getSavedWallets() {
-        // TODO: Consider running DB operations off the main thread using AsyncTask, Coroutines, or RxJava
+    // Return LiveData directly from the DAO
+    public LiveData<List<WalletHandle>> getSavedWallets() {
+        // Room handles background threading for LiveData queries
         return walletHandleDao.getAll();
     }
 
+    // Note: DB operations like insert/delete should still be run off the main thread.
+    // Consider using an ExecutorService, Kotlin Coroutines, or RxJava for this.
     public WalletHandle createNewWallet(String name, String password) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
         // Generate the wallet file and load credentials to get the address
         String filename = WalletUtils.generateNewWalletFile(password, walletsDir);
@@ -46,10 +52,10 @@ public class WalletRepository {
         WalletHandle walletHandle = new WalletHandle(UUID.randomUUID(), name, filename, address);
 
         // Save the WalletHandle to the database
-        // TODO: Consider running DB operations off the main thread using AsyncTask, Coroutines, or RxJava
+        // TODO: Run this insert operation off the main thread
         walletHandleDao.insertAll(walletHandle);
 
-        // Return the created WalletHandle
+        // Return the created WalletHandle (note: ID might not be set immediately if insert is async)
         return walletHandle;
     }
 }
