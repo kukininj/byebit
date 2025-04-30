@@ -5,11 +5,13 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 
 import com.example.byebit.dao.WalletHandleDao;
 import com.example.byebit.domain.WalletHandle;
 
 @Database(entities = {WalletHandle.class}, version = 1)
+@TypeConverters({UuidConverter.class}) // Register the converter
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract WalletHandleDao getWalletHandleDao();
