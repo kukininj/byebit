@@ -15,11 +15,25 @@
         android:id="@+id/navigation_dashboard"
         android:name="com.example.byebit.ui.dashboard.DashboardFragment"
         android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        tools:layout="@layout/fragment_dashboard" >
+        <!-- Action to navigate to the create wallet fragment -->
+        <action
+            android:id="@+id/action_dashboard_to_createWalletFragment"
+            app:destination="@id/navigation_create_wallet"
+            /> <!-- Removed animation attributes -->
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_notifications"
         android:name="com.example.byebit.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
+
+    <!-- New fragment for creating a wallet -->
+    <fragment
+        android:id="@+id/navigation_create_wallet"
+        android:name="com.example.byebit.ui.createwallet.CreateWalletFragment"
+        android:label="@string/title_create_wallet"
+        tools:layout="@layout/fragment_create_wallet" />
+
 </navigation>

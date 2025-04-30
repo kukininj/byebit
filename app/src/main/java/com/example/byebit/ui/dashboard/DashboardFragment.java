@@ -14,6 +14,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager; // Import LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView; // Import RecyclerView
+import androidx.navigation.NavController; // Import NavController
+import androidx.navigation.Navigation; // Import Navigation helper
 
 import com.example.byebit.adapter.WalletAdapter; // Import WalletAdapter
 import com.example.byebit.databinding.FragmentDashboardBinding;
@@ -40,6 +42,13 @@ public class DashboardFragment extends Fragment {
         // Remove old TextView observation
         // final TextView textView = binding.textDashboard;
         // dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+
+        // Set click listener for the FAB
+        binding.fabCreateWallet.setOnClickListener(v -> {
+            NavController navController = Navigation.findNavController(v);
+            navController.navigate(com.example.byebit.R.id.action_dashboard_to_createWalletFragment);
+        });
+
 
         return root;
     }
