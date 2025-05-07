@@ -14,6 +14,9 @@ import android.os.Looper; // ADD
 import android.util.Log; // ADD
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Menu; // ADD THIS
+import android.view.MenuInflater; // ADD THIS
+import android.view.MenuItem; // ADD THIS
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
@@ -113,6 +116,8 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true); // ADD THIS LINE to indicate the fragment has menu items
+
         // ViewModel is initialized in onCreateView, which is fine.
         // Initialize ActivityResultLauncher here
         exportWalletsLauncher = registerForActivityResult(
@@ -135,6 +140,26 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
                     walletsToExportHolder = null;
                 }
         );
+    }
+
+    // ADD THIS METHOD to inflate the menu
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.dashboard_menu, menu);
+    }
+
+    // ADD THIS METHOD to handle menu item selections
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_refresh_balances) {
+            if (dashboardViewModel != null) {
+                dashboardViewModel.refreshAllWalletBalances();
+                Toast.makeText(getContext(), "Refreshing balances...", Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
