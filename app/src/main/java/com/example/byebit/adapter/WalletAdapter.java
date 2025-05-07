@@ -29,6 +29,15 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
     // Add this field inside the WalletAdapter class
     private OnItemClickListener listener;
 
+    // ADD: Interface for long click listener
+    public interface OnItemLongClickListener {
+        void onItemLongClick(WalletHandle wallet);
+    }
+
+    // ADD: Field for long click listener
+    private OnItemLongClickListener longClickListener;
+
+
     @NonNull
     @Override
     public WalletViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -72,6 +81,15 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
                 listener.onItemClick(currentWallet);
             }
         });
+
+        // ADD: Set the long click listener
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onItemLongClick(currentWallet);
+                return true; // Consume the long click
+            }
+            return false;
+        });
     }
 
     @Override
@@ -89,6 +107,12 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
+
+    // ADD: Setter for the long click listener
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longClickListener = listener;
+    }
+
 
     // ViewHolder class
     static class WalletViewHolder extends RecyclerView.ViewHolder {

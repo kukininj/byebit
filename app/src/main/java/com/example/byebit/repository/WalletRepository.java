@@ -126,6 +126,37 @@ public class WalletRepository {
         });
     }
 
+    // ADD: Method to delete a wallet (file and database entry)
+    public void deleteWallet(WalletHandle wallet) {
+        databaseWriteExecutor.execute(() -> {
+            try {
+                // 1. Delete the wallet file from the filesystem
+                // Ensure 'walletsDir' correctly points to where files are stored.
+                File walletFile = new File(this.walletsDir, wallet.getFilename());
+                if (walletFile.exists()) {
+                    if (walletFile.delete()) {
+                        Log.d(TAG, "Successfully deleted wallet file: " + walletFile.getAbsolutePath());
+                    } else {
+                        Log.w(TAG, "Failed to delete wallet file: " + walletFile.getAbsolutePath());
+                        // Consider how to handle this failure; for now, we proceed to DB deletion.
+                    }
+                } else {
+                    Log.w(TAG, "Wallet file not found, cannot delete from filesystem: " + walletFile.getAbsolutePath());
+                }
+
+                // 2. Delete the WalletHandle entry from the database
+                walletHandleDao.delete(wallet);
+                Log.d(TAG, "Successfully deleted wallet from database: " + wallet.getName() + " (Address: " + wallet.getAddress() + ")");
+                // The LiveData in DashboardViewModel will automatically update the UI.
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error deleting wallet: " + wallet.getName(), e);
+                // Consider how to report this error back to the UI if needed.
+                // For now, logging the error.
+            }
+        });
+    }
+
 
     // Add a method to shut down the executor and the Web3j client
     // This should be called when the repository is no longer needed (e.g., from ViewModel's onCleared)

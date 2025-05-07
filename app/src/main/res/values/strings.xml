@@ -18,4 +18,12 @@
     <!-- Sepolia RPC URL -->
     <string name="sepolia_rpc_url">https://sepolia.drpc.org</string>
 
+    <!-- Strings for wallet deletion -->
+    <string name="delete_wallet_dialog_title">Delete Wallet</string>
+    <string name="delete_wallet_dialog_message">Are you sure you want to delete wallet \'%1$s\' (%2$s)?\nThis action cannot be undone.</string>
+    <string name="delete_wallet_dialog_positive_button">Delete</string>
+    <string name="delete_wallet_dialog_negative_button">Cancel</string>
+    <string name="wallet_deleted_toast">Wallet deleted</string>
+    <string name="wallet_deletion_failed_toast">Failed to delete wallet</string>
+
 </resources>

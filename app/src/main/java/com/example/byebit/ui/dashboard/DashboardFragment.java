@@ -36,6 +36,44 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.byebit.R;
 import com.example.byebit.adapter.WalletAdapter;
+// ADD: AlertDialog import
+import androidx.appcompat.app.AlertDialog;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.app.Activity; // ADD
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent; // ADD
+import android.net.Uri; // ADD
+// import android.os.Bundle; // Already present
+import android.os.Handler; // ADD
+import android.os.Looper; // ADD
+import android.util.Log; // ADD
+// import android.view.LayoutInflater; // Already present
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher; // ADD
+import androidx.activity.result.contract.ActivityResultContracts; // ADD
+// Remove TextView import if no longer needed
+// import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable; // Import Nullable
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager; // Import LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView; // Import RecyclerView
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation; // Import Navigation helper
+// import androidx.recyclerview.widget.LinearLayoutManager; // Already present
+// import androidx.recyclerview.widget.RecyclerView; // Already present
+
+import com.example.byebit.R;
+import com.example.byebit.adapter.WalletAdapter;
 import com.example.byebit.databinding.FragmentDashboardBinding;
 import com.example.byebit.domain.WalletHandle; // ADD
 
@@ -56,7 +94,8 @@ import com.example.byebit.R;
 import com.example.byebit.adapter.WalletAdapter;
 import com.example.byebit.databinding.FragmentDashboardBinding;
 
-public class DashboardFragment extends Fragment {
+// IMPLEMENT the WalletAdapter.OnItemLongClickListener interface
+public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener {
 
     private FragmentDashboardBinding binding;
     private DashboardViewModel dashboardViewModel; // Make ViewModel accessible
@@ -190,7 +229,30 @@ public class DashboardFragment extends Fragment {
             dashboardViewModel.fetchBalanceForAddress(walletAddress);
             // --- End of balance fetching logic ---
         });
+
+        // ADD: Set the long click listener
+        walletAdapter.setOnItemLongClickListener(this);
     }
+
+    // ADD: Method to handle long clicks (from OnItemLongClickListener interface)
+    @Override
+    public void onItemLongClick(WalletHandle wallet) {
+        if (getContext() == null) return; // Guard against null context
+
+        new AlertDialog.Builder(requireContext()) // Use requireContext() for non-null context
+                .setTitle(getString(R.string.delete_wallet_dialog_title))
+                .setMessage(getString(R.string.delete_wallet_dialog_message, wallet.getName(), wallet.getAddress()))
+                .setPositiveButton(getString(R.string.delete_wallet_dialog_positive_button), (dialog, which) -> {
+                    dashboardViewModel.deleteWallet(wallet);
+                    // The list will update automatically due to LiveData observation.
+                    // A toast confirms the action.
+                    Toast.makeText(getContext(), getString(R.string.wallet_deleted_toast) + ": " + wallet.getName(), Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(getString(R.string.delete_wallet_dialog_negative_button), null) // No action on cancel
+                .setIcon(android.R.drawable.ic_dialog_alert) // Optional: standard alert icon
+                .show();
+    }
+
 
     // ADD THIS METHOD
     private void launchSaveZipFilePicker() {

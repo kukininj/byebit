@@ -31,6 +31,13 @@ public class DashboardViewModel extends AndroidViewModel {
         walletRepository.getWalletBalance(address);
     }
 
+    // ADD: Method to delete a wallet
+    public void deleteWallet(WalletHandle wallet) {
+        walletRepository.deleteWallet(wallet);
+        // Optionally, you could add LiveData here to observe deletion status/errors
+        // For now, the list will update automatically via getSavedWallets() LiveData
+    }
+
     @Override
     protected void onCleared() {
         super.onCleared();
