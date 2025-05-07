@@ -15,6 +15,13 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager; // Import LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView; // Import RecyclerView
 import androidx.navigation.NavController; // Import NavController
+// Add these imports at the top of the file
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.widget.Toast;
+import com.example.byebit.domain.WalletHandle; // Import WalletHandle
+
 import androidx.navigation.Navigation; // Import Navigation helper
 
 import com.example.byebit.adapter.WalletAdapter; // Import WalletAdapter
@@ -73,6 +80,27 @@ public class DashboardFragment extends Fragment {
 
         walletAdapter = new WalletAdapter(); // Create the adapter
         recyclerView.setAdapter(walletAdapter); // Set the adapter
+
+        // Set the item click listener
+        walletAdapter.setOnItemClickListener(wallet -> {
+            // Get the wallet address
+            String walletAddress = wallet.getAddress();
+
+            // Get the clipboard manager
+            ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+
+            // Create a ClipData object
+            ClipData clip = ClipData.newPlainText("Wallet Address", walletAddress);
+
+            // Set the clip data to the clipboard
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(clip);
+                // Show a confirmation message
+                Toast.makeText(getContext(), "Address copied to clipboard", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Failed to copy address", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

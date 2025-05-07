@@ -17,6 +17,13 @@ import java.util.List;
 public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletViewHolder> {
 
     private List<WalletHandle> wallets = new ArrayList<>();
+    // Add this interface definition inside the WalletAdapter class
+    public interface OnItemClickListener {
+        void onItemClick(WalletHandle wallet);
+    }
+
+    // Add this field inside the WalletAdapter class
+    private OnItemClickListener listener;
 
     @NonNull
     @Override
@@ -31,7 +38,13 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
         WalletHandle currentWallet = wallets.get(position);
         holder.textViewName.setText(currentWallet.getName());
         holder.textViewAddress.setText(currentWallet.getAddress());
-        // TODO: Add onClickListener if needed
+
+        // Set click listener on the item view
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(currentWallet);
+            }
+        });
     }
 
     @Override
@@ -43,6 +56,11 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
     public void setWallets(List<WalletHandle> wallets) {
         this.wallets = wallets;
         notifyDataSetChanged(); // Notify the adapter that the data set has changed
+    }
+
+    // Add this method inside the WalletAdapter class
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
     }
 
     // ViewHolder class
