@@ -9,9 +9,11 @@ import androidx.room.TypeConverters;
 
 import com.example.byebit.dao.WalletHandleDao;
 import com.example.byebit.domain.WalletHandle;
+// ADDED: Import BigDecimalConverter
+import com.example.byebit.config.BigDecimalConverter;
 
-@Database(entities = {WalletHandle.class}, version = 2) // MODIFIED: Increment version
-@TypeConverters({UuidConverter.class}) // Register the converter
+@Database(entities = {WalletHandle.class}, version = 3) // MODIFIED: Increment version from 2 to 3
+@TypeConverters({UuidConverter.class, BigDecimalConverter.class}) // MODIFIED: Add BigDecimalConverter
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract WalletHandleDao getWalletHandleDao();

@@ -21,6 +21,8 @@ import org.web3j.protocol.http.HttpService; // Import HttpService
 
 import java.io.File;
 import java.io.IOException;
+// ADDED: Import BigDecimal
+import java.math.BigDecimal;
 import java.math.BigInteger; // Import BigInteger
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
@@ -97,8 +99,8 @@ public class WalletRepository {
                     Log.d(TAG, "Successfully fetched balance for " + address + ": " + balanceWei + " Wei"); // Log success
                     // Post the result back to the main thread via LiveData
                     balanceLiveData.postValue(balanceWei);
-                    // ADDED: Update the balance in the database
-                    updateWalletBalanceInDb(address, balanceWei.toString());
+                    // MODIFIED: Convert BigInteger to BigDecimal before updating DB
+                    updateWalletBalanceInDb(address, new BigDecimal(balanceWei));
                 }
             } catch (IOException e) {
                 // Handle network or other exceptions
@@ -110,14 +112,15 @@ public class WalletRepository {
         return balanceLiveData;
     }
 
-    // ADDED: Private helper method to update wallet balance in the database
-    private void updateWalletBalanceInDb(String address, String balance) {
+    // MODIFIED: Update parameter type to BigDecimal
+    private void updateWalletBalanceInDb(String address, BigDecimal balance) {
         databaseWriteExecutor.execute(() -> {
             WalletHandle wallet = walletHandleDao.findByAddressSync(address);
             if (wallet != null) {
-                wallet.setBalance(balance);
+                wallet.setBalance(balance); // Set BigDecimal balance
                 walletHandleDao.update(wallet);
-                Log.d(TAG, "Updated balance in DB for address " + address + " to " + balance);
+                // MODIFIED: Log with toPlainString() for consistent output
+                Log.d(TAG, "Updated balance in DB for address " + address + " to " + balance.toPlainString());
             } else {
                 Log.w(TAG, "Could not find wallet in DB to update balance for address: " + address);
             }

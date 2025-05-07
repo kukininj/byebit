@@ -13,6 +13,7 @@ import com.example.byebit.domain.WalletHandle;
 
 import java.util.ArrayList;
 import java.util.List;
+// java.math.BigDecimal import is not strictly needed here if only calling toPlainString()
 
 public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletViewHolder> {
 
@@ -41,12 +42,14 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
 
         // Set the balance text
         if (currentWallet.getBalance() != null) {
+            // MODIFIED: Convert BigDecimal to String for display using toPlainString()
             // TODO: Consider formatting the balance (e.g., Wei to Ether)
             // For now, displaying the raw string value from the database.
             // You might want to add units like "ETH" or "Wei"
-            holder.textViewBalance.setText("Balance: " + currentWallet.getBalance());
+            holder.textViewBalance.setText("Balance: " + currentWallet.getBalance().toPlainString());
         } else {
             // Handle case where balance might be null (e.g., still loading or error)
+            // This is less likely if initialized to BigDecimal.ZERO
             holder.textViewBalance.setText("Balance: N/A");
         }
 

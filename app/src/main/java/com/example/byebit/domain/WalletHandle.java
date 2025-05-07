@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+// Add this import
+import java.math.BigDecimal;
 import java.util.UUID;
 
 // Note: @TypeConverters annotation is now on AppDatabase
@@ -23,8 +25,8 @@ public class WalletHandle {
     @NonNull
     private final String address; // Added address field
 
-    // Add this field
-    private String balance;
+    // MODIFIED: Change type from String to BigDecimal
+    private BigDecimal balance;
 
     // Constructor updated for Room compatibility and new fields
     public WalletHandle(@NonNull UUID id, @NonNull String name, @NonNull String filename, @NonNull String address) {
@@ -32,8 +34,8 @@ public class WalletHandle {
         this.name = name;
         this.filename = filename;
         this.address = address;
-        // Initialize balance
-        this.balance = "0"; // Or null, if you prefer to explicitly check for null
+        // MODIFIED: Initialize balance with BigDecimal.ZERO
+        this.balance = BigDecimal.ZERO;
     }
 
     // --- Getters ---
@@ -58,12 +60,12 @@ public class WalletHandle {
         return address;
     }
 
-    // Add these getter and setter methods for balance
-    public String getBalance() {
+    // MODIFIED: Update getter and setter for balance
+    public BigDecimal getBalance() {
         return balance;
     }
 
-    public void setBalance(String balance) {
+    public void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
 }
