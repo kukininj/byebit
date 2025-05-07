@@ -28,6 +28,16 @@ public class WalletHandle {
     // MODIFIED: Change type from String to BigDecimal
     private BigDecimal balance;
 
+    private Long balanceLastUpdated;
+
+    public Long getBalanceLastUpdated() {
+        return balanceLastUpdated;
+    }
+
+    public void setBalanceLastUpdated(Long balanceLastUpdated) {
+        this.balanceLastUpdated = balanceLastUpdated;
+    }
+
     // Constructor updated for Room compatibility and new fields
     public WalletHandle(@NonNull UUID id, @NonNull String name, @NonNull String filename, @NonNull String address) {
         this.id = id;

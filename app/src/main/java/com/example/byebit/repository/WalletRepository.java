@@ -118,9 +118,10 @@ public class WalletRepository {
             WalletHandle wallet = walletHandleDao.findByAddressSync(address);
             if (wallet != null) {
                 wallet.setBalance(balance); // Set BigDecimal balance
+                wallet.setBalanceLastUpdated(System.currentTimeMillis());
                 walletHandleDao.update(wallet);
                 // MODIFIED: Log with toPlainString() for consistent output
-                Log.d(TAG, "Updated balance in DB for address " + address + " to " + balance.toPlainString());
+                Log.d(TAG, "Updated balance in DB for address " + address + " to " + balance.toPlainString() + " at " + wallet.getBalanceLastUpdated());
             } else {
                 Log.w(TAG, "Could not find wallet in DB to update balance for address: " + address);
             }

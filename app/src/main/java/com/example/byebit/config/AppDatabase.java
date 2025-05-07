@@ -12,7 +12,7 @@ import com.example.byebit.domain.WalletHandle;
 // ADDED: Import BigDecimalConverter
 import com.example.byebit.config.BigDecimalConverter;
 
-@Database(entities = {WalletHandle.class}, version = 3) // MODIFIED: Increment version from 2 to 3
+@Database(entities = {WalletHandle.class}, version = 4) // MODIFIED: Increment version from 2 to 3
 @TypeConverters({UuidConverter.class, BigDecimalConverter.class}) // MODIFIED: Add BigDecimalConverter
 public abstract class AppDatabase extends RoomDatabase {
 

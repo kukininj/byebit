@@ -11,8 +11,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.byebit.R;
 import com.example.byebit.domain.WalletHandle;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 // java.math.BigDecimal import is not strictly needed here if only calling toPlainString()
 
 public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletViewHolder> {
@@ -53,6 +56,17 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
             holder.textViewBalance.setText("Balance: N/A");
         }
 
+        // START ADDED CODE for balance last updated
+        Long lastUpdatedTimestamp = currentWallet.getBalanceLastUpdated();
+        if (lastUpdatedTimestamp != null && lastUpdatedTimestamp > 0) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault());
+            String lastUpdatedDate = sdf.format(new Date(lastUpdatedTimestamp));
+            holder.textViewBalanceLastUpdated.setText("Last updated: " + lastUpdatedDate);
+        } else {
+            holder.textViewBalanceLastUpdated.setText("Last updated: N/A");
+        }
+        // END ADDED CODE for balance last updated
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(currentWallet);
@@ -82,6 +96,8 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
         private final TextView textViewAddress;
         // Add this field for the balance TextView
         private final TextView textViewBalance;
+        // ADD THIS field for the balance last updated TextView
+        private final TextView textViewBalanceLastUpdated;
 
         public WalletViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -89,6 +105,8 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
             textViewAddress = itemView.findViewById(R.id.wallet_address);
             // Initialize the balance TextView
             textViewBalance = itemView.findViewById(R.id.wallet_balance);
+            // INITIALIZE the balance last updated TextView
+            textViewBalanceLastUpdated = itemView.findViewById(R.id.wallet_balance_last_updated);
         }
     }
 }

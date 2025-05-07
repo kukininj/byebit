@@ -32,4 +32,14 @@
         android:text="Balance: 0 ETH"
         android:layout_marginTop="4dp"/>
 
+    <!-- ADD THIS TextView for the balance last updated timestamp -->
+    <TextView
+        android:id="@+id/wallet_balance_last_updated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:text="Last updated: N/A"
+        android:layout_marginTop="2dp"/>
+
 </LinearLayout>
