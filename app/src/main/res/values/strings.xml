@@ -12,4 +12,7 @@
     <string name="button_create_wallet">Create Wallet</string>
     <string name="add_new_wallet">Add new wallet</string>
 
+    <!-- Sepolia RPC URL -->
+    <string name="sepolia_rpc_url">https://sepolia.drpc.org</string> <!-- Add this line -->
+
 </resources>

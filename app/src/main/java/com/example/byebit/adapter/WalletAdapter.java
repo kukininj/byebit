@@ -39,7 +39,17 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
         holder.textViewName.setText(currentWallet.getName());
         holder.textViewAddress.setText(currentWallet.getAddress());
 
-        // Set click listener on the item view
+        // Set the balance text
+        if (currentWallet.getBalance() != null) {
+            // TODO: Consider formatting the balance (e.g., Wei to Ether)
+            // For now, displaying the raw string value from the database.
+            // You might want to add units like "ETH" or "Wei"
+            holder.textViewBalance.setText("Balance: " + currentWallet.getBalance());
+        } else {
+            // Handle case where balance might be null (e.g., still loading or error)
+            holder.textViewBalance.setText("Balance: N/A");
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(currentWallet);
@@ -67,11 +77,15 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
     static class WalletViewHolder extends RecyclerView.ViewHolder {
         private final TextView textViewName;
         private final TextView textViewAddress;
+        // Add this field for the balance TextView
+        private final TextView textViewBalance;
 
         public WalletViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewName = itemView.findViewById(R.id.wallet_name);
             textViewAddress = itemView.findViewById(R.id.wallet_address);
+            // Initialize the balance TextView
+            textViewBalance = itemView.findViewById(R.id.wallet_balance);
         }
     }
 }

@@ -22,4 +22,14 @@
         android:textColor="@android:color/darker_gray"
         android:text="0x1234..." />
 
+    <!-- Add this TextView for the balance -->
+    <TextView
+        android:id="@+id/wallet_balance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="@android:color/holo_green_dark"
+        android:text="Balance: 0 ETH"
+        android:layout_marginTop="4dp"/>
+
 </LinearLayout>

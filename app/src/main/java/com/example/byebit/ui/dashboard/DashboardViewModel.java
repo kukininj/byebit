@@ -3,35 +3,23 @@ package com.example.byebit.ui.dashboard;
 import android.app.Application;
 
 import androidx.lifecycle.AndroidViewModel;
-import android.app.Application;
-
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-// Remove MutableLiveData if no longer needed
-// import androidx.lifecycle.MutableLiveData;
 
-import com.example.byebit.domain.WalletHandle; // Import WalletHandle
+import com.example.byebit.domain.WalletHandle;
 import com.example.byebit.repository.WalletRepository;
 
-import java.util.List; // Import List
+import java.math.BigInteger; // Import BigInteger
+import java.util.List;
 
 public class DashboardViewModel extends AndroidViewModel {
 
     private final WalletRepository walletRepository;
-    private final LiveData<List<WalletHandle>> savedWallets; // LiveData for wallets
-
-    // Remove mText if not used elsewhere
-    // private final MutableLiveData<String> mText;
+    private final LiveData<List<WalletHandle>> savedWallets;
 
     public DashboardViewModel(Application application) {
         super(application);
         walletRepository = new WalletRepository(application);
-        // Initialize savedWallets by getting LiveData from the repository
         savedWallets = walletRepository.getSavedWallets();
-
-        // Remove placeholder text initialization
-        // mText = new MutableLiveData<>();
-        // mText.setValue("This is dashboard fragment");
     }
 
     // Getter for the wallet list LiveData
@@ -39,8 +27,15 @@ public class DashboardViewModel extends AndroidViewModel {
         return savedWallets;
     }
 
-    // Remove getText() if mText is removed
-    // public LiveData<String> getText() {
-    //     return mText;
-    // }
+    // Add a method to get the balance for a specific wallet address
+    public LiveData<BigInteger> getBalanceForAddress(String address) {
+        return walletRepository.getWalletBalance(address);
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        // Shut down the repository's executors and Web3j client when the ViewModel is cleared
+        walletRepository.shutdown();
+    }
 }
