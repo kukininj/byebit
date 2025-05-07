@@ -82,7 +82,7 @@ public class WalletRepository {
 
     // Add a method to get balance for a given address
     // This method returns LiveData and performs the network call on the executor
-    public LiveData<BigInteger> getWalletBalance(String address) {
+    public void getWalletBalance(String address) {
         MutableLiveData<BigInteger> balanceLiveData = new MutableLiveData<>();
 
         // Execute the Web3j call on a background thread
@@ -108,8 +108,6 @@ public class WalletRepository {
                 balanceLiveData.postValue(null); // Indicate error or no data
             }
         });
-
-        return balanceLiveData;
     }
 
     // MODIFIED: Update parameter type to BigDecimal

@@ -8,7 +8,6 @@ import androidx.lifecycle.LiveData;
 import com.example.byebit.domain.WalletHandle;
 import com.example.byebit.repository.WalletRepository;
 
-import java.math.BigInteger; // Import BigInteger
 import java.util.List;
 
 public class DashboardViewModel extends AndroidViewModel {
@@ -28,8 +27,8 @@ public class DashboardViewModel extends AndroidViewModel {
     }
 
     // Add a method to get the balance for a specific wallet address
-    public LiveData<BigInteger> getBalanceForAddress(String address) {
-        return walletRepository.getWalletBalance(address);
+    public void fetchBalanceForAddress(String address) {
+        walletRepository.getWalletBalance(address);
     }
 
     @Override

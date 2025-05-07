@@ -1,7 +1,6 @@
 package com.example.byebit.ui.dashboard;
 
 import android.os.Bundle;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,14 +19,11 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.widget.Toast;
-import com.example.byebit.domain.WalletHandle; // Import WalletHandle
 
 import androidx.navigation.Navigation; // Import Navigation helper
 
 import com.example.byebit.adapter.WalletAdapter; // Import WalletAdapter
 import com.example.byebit.databinding.FragmentDashboardBinding;
-
-import java.math.BigInteger; // Import BigInteger
 
 public class DashboardFragment extends Fragment {
 
@@ -107,17 +103,7 @@ public class DashboardFragment extends Fragment {
             // Request the balance from the ViewModel
             // We observe it here directly for simplicity, but in a complex app,
             // you might manage this observation differently (e.g., in a detail fragment)
-            dashboardViewModel.getBalanceForAddress(walletAddress).observe(getViewLifecycleOwner(), balance -> {
-                if (balance != null) {
-                    // Display the balance (e.g., in a Toast for now)
-                    // You might want to convert Wei to Ether for display
-                    Toast.makeText(getContext(), "Balance: " + balance.toString() + " Wei", Toast.LENGTH_LONG).show();
-                    // In a real UI, you'd update a TextView or navigate to a detail screen
-                } else {
-                    // Handle error or loading state
-                    Toast.makeText(getContext(), "Failed to get balance", Toast.LENGTH_SHORT).show();
-                }
-            });
+            dashboardViewModel.fetchBalanceForAddress(walletAddress);
             // --- End of balance fetching logic ---
         });
     }
