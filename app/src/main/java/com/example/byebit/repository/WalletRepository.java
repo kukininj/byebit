@@ -97,6 +97,8 @@ public class WalletRepository {
                     Log.d(TAG, "Successfully fetched balance for " + address + ": " + balanceWei + " Wei"); // Log success
                     // Post the result back to the main thread via LiveData
                     balanceLiveData.postValue(balanceWei);
+                    // ADDED: Update the balance in the database
+                    updateWalletBalanceInDb(address, balanceWei.toString());
                 }
             } catch (IOException e) {
                 // Handle network or other exceptions
@@ -106,6 +108,20 @@ public class WalletRepository {
         });
 
         return balanceLiveData;
+    }
+
+    // ADDED: Private helper method to update wallet balance in the database
+    private void updateWalletBalanceInDb(String address, String balance) {
+        databaseWriteExecutor.execute(() -> {
+            WalletHandle wallet = walletHandleDao.findByAddressSync(address);
+            if (wallet != null) {
+                wallet.setBalance(balance);
+                walletHandleDao.update(wallet);
+                Log.d(TAG, "Updated balance in DB for address " + address + " to " + balance);
+            } else {
+                Log.w(TAG, "Could not find wallet in DB to update balance for address: " + address);
+            }
+        });
     }
 
 

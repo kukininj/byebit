@@ -5,6 +5,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.lifecycle.LiveData; // Import LiveData
 import androidx.room.Query;
+import androidx.room.Update; // ADDED: Import Update
 
 import com.example.byebit.domain.WalletHandle;
 
@@ -23,5 +24,13 @@ public interface WalletHandleDao {
 
     @Delete
     void delete(WalletHandle handle);
+
+    // ADDED: Method to update a WalletHandle
+    @Update
+    void update(WalletHandle handle);
+
+    // ADDED: Method to find a wallet by its address synchronously
+    @Query("SELECT * FROM wallethandle WHERE address = :address LIMIT 1")
+    WalletHandle findByAddressSync(String address);
 
 }

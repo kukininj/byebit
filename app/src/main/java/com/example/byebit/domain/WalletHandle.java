@@ -23,12 +23,17 @@ public class WalletHandle {
     @NonNull
     private final String address; // Added address field
 
+    // Add this field
+    private String balance;
+
     // Constructor updated for Room compatibility and new fields
     public WalletHandle(@NonNull UUID id, @NonNull String name, @NonNull String filename, @NonNull String address) {
         this.id = id;
         this.name = name;
         this.filename = filename;
         this.address = address;
+        // Initialize balance
+        this.balance = "0"; // Or null, if you prefer to explicitly check for null
     }
 
     // --- Getters ---
@@ -51,5 +56,14 @@ public class WalletHandle {
     @NonNull
     public String getAddress() {
         return address;
+    }
+
+    // Add these getter and setter methods for balance
+    public String getBalance() {
+        return balance;
+    }
+
+    public void setBalance(String balance) {
+        this.balance = balance;
     }
 }
