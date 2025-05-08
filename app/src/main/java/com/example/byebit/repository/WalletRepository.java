@@ -18,6 +18,7 @@ import org.web3j.protocol.Web3j; // Import Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName; // Import DefaultBlockParameterName
 import org.web3j.protocol.core.methods.response.EthGetBalance; // Import EthGetBalance
 import org.web3j.protocol.http.HttpService; // Import HttpService
+import org.web3j.utils.Convert;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,8 +92,6 @@ public class WalletRepository {
     // Add a method to get balance for a given address
     // This method returns LiveData and performs the network call on the executor
     public void getWalletBalance(String address) {
-        MutableLiveData<BigInteger> balanceLiveData = new MutableLiveData<>();
-
         // Execute the Web3j call on a background thread
         databaseWriteExecutor.execute(() -> {
             try {
@@ -101,19 +100,15 @@ public class WalletRepository {
                 if (ethGetBalance.hasError()) {
                     // Handle error (e.g., log it, post an error state to LiveData)
                     Log.e(TAG, "Error fetching balance for " + address + ": " + ethGetBalance.getError().getMessage());
-                    balanceLiveData.postValue(null); // Indicate error or no data
                 } else {
                     BigInteger balanceWei = ethGetBalance.getBalance();
+                    BigDecimal balance = Convert.fromWei(new BigDecimal(balanceWei), Convert.Unit.ETHER);
                     Log.d(TAG, "Successfully fetched balance for " + address + ": " + balanceWei + " Wei"); // Log success
-                    // Post the result back to the main thread via LiveData
-                    balanceLiveData.postValue(balanceWei);
-                    // MODIFIED: Convert BigInteger to BigDecimal before updating DB
-                    updateWalletBalanceInDb(address, new BigDecimal(balanceWei));
+                    updateWalletBalanceInDb(address, balance);
                 }
             } catch (IOException e) {
                 // Handle network or other exceptions
                 Log.e(TAG, "Exception fetching balance for " + address, e);
-                balanceLiveData.postValue(null); // Indicate error or no data
             }
         });
     }
