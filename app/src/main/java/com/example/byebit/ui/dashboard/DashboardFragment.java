@@ -19,6 +19,9 @@ import android.view.MenuInflater; // ADD THIS
 import android.view.MenuItem; // ADD THIS
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
+import android.widget.EditText;
+import android.text.InputType;
+import org.web3j.crypto.Credentials;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher; // ADD
@@ -98,7 +101,7 @@ import com.example.byebit.adapter.WalletAdapter;
 import com.example.byebit.databinding.FragmentDashboardBinding;
 
 // IMPLEMENT the WalletAdapter.OnItemLongClickListener interface
-public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener {
+public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener, WalletAdapter.OnDetailsClickListener {
 
     private FragmentDashboardBinding binding;
     private DashboardViewModel dashboardViewModel; // Make ViewModel accessible
@@ -111,6 +114,8 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     private List<WalletHandle> walletsToExportHolder; // To hold wallets between SAF launch and result
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(); // For background zipping
     private final Handler mainThreadHandler = new Handler(Looper.getMainLooper()); // To post results to UI thread
+
+    private WalletHandle currentWalletForDetails;
 
     // ADD THIS ENTIRE onCreate METHOD
     @Override
@@ -217,6 +222,25 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
                 walletAdapter.setWallets(wallets);
             }
         });
+
+        dashboardViewModel.getCredentialsResult().observe(getViewLifecycleOwner(), result -> {
+            if (result == null) return;
+
+            if (result.isLoading()) {
+                Toast.makeText(getContext(), "Loading wallet details...", Toast.LENGTH_SHORT).show();
+            } else if (result.isError()) {
+                Toast.makeText(getContext(), "Error: " + result.getError(), Toast.LENGTH_LONG).show();
+                dashboardViewModel.clearCredentialsResult();
+                this.currentWalletForDetails = null;
+            } else if (result.isSuccess() && result.getCredentials() != null) {
+                if (this.currentWalletForDetails != null) {
+                    showWalletDetailsDialog(this.currentWalletForDetails, result.getCredentials());
+                } else {
+                    Log.e(TAG, "currentWalletForDetails is null when credentials result received.");
+                }
+                dashboardViewModel.clearCredentialsResult();
+            }
+        });
     }
 
     private void setupRecyclerView() {
@@ -257,6 +281,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
         // ADD: Set the long click listener
         walletAdapter.setOnItemLongClickListener(this);
+        walletAdapter.setOnDetailsClickListener(this); // SET THE NEW LISTENER
     }
 
     // ADD: Method to handle long clicks (from OnItemLongClickListener interface)
@@ -278,6 +303,94 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
                 .show();
     }
 
+
+    @Override
+    public void onDetailsClick(WalletHandle wallet) {
+        if (getContext() == null) return;
+        this.currentWalletForDetails = wallet;
+
+        AlertDialog.Builder passwordDialogBuilder = new AlertDialog.Builder(requireContext());
+        passwordDialogBuilder.setTitle(getString(R.string.enter_password_for_wallet, wallet.getName()));
+
+        final EditText passwordInput = new EditText(requireContext());
+        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        passwordInput.setHint(R.string.password_hint);
+        // For better padding, wrap EditText in a FrameLayout or similar
+        android.widget.FrameLayout container = new android.widget.FrameLayout(requireContext());
+        android.widget.FrameLayout.LayoutParams params = new  android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        int margin = (int) getResources().getDimension(R.dimen.dialog_edittext_margin); // Define dialog_edittext_margin in dimens.xml
+        params.leftMargin = margin;
+        params.rightMargin = margin;
+        passwordInput.setLayoutParams(params);
+        container.addView(passwordInput);
+        passwordDialogBuilder.setView(container);
+
+
+        passwordDialogBuilder.setPositiveButton(R.string.ok_button, (dialog, which) -> {
+            String password = passwordInput.getText().toString();
+            if (password.isEmpty()) {
+                Toast.makeText(getContext(), R.string.password_cannot_be_empty, Toast.LENGTH_SHORT).show();
+                this.currentWalletForDetails = null;
+                return;
+            }
+            dashboardViewModel.loadCredentialsForWallet(wallet, password);
+        });
+        passwordDialogBuilder.setNegativeButton(R.string.cancel_button, (dialog, which) -> {
+            dialog.cancel();
+            this.currentWalletForDetails = null;
+        });
+        passwordDialogBuilder.show();
+    }
+
+    private void showWalletDetailsDialog(WalletHandle wallet, Credentials credentials) {
+        if (getContext() == null) return;
+
+        String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
+
+        AlertDialog.Builder detailsDialogBuilder = new AlertDialog.Builder(requireContext());
+        detailsDialogBuilder.setTitle(getString(R.string.wallet_details_title, wallet.getName()));
+
+        String message = getString(R.string.wallet_address_label) + "\n" + wallet.getAddress() +
+                         "\n\n" + getString(R.string.private_key_label) + "\n" + privateKey;
+        detailsDialogBuilder.setMessage(message);
+
+        detailsDialogBuilder.setPositiveButton(R.string.delete_wallet_button_details, (dialog, which) -> {
+            new AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.confirm_delete_wallet_title))
+                .setMessage(getString(R.string.confirm_delete_wallet_message, wallet.getName()))
+                .setPositiveButton(getString(R.string.delete_button_confirm), (confirmDialog, confirmWhich) -> {
+                    dashboardViewModel.deleteWallet(wallet);
+                    Toast.makeText(getContext(), getString(R.string.wallet_deleted_toast_param, wallet.getName()), Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.cancel_button, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+        });
+
+        detailsDialogBuilder.setNeutralButton(R.string.copy_private_key_button, (dialog, which) -> {
+            ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Private Key", privateKey);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(getContext(), R.string.private_key_copied_toast, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), R.string.failed_to_copy_private_key_toast, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+        detailsDialogBuilder.setNegativeButton(R.string.close_button, (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        detailsDialogBuilder.setOnDismissListener(dialogInterface -> {
+            this.currentWalletForDetails = null;
+        });
+
+        detailsDialogBuilder.setCancelable(false);
+        detailsDialogBuilder.show();
+    }
 
     // ADD THIS METHOD
     private void launchSaveZipFilePicker() {

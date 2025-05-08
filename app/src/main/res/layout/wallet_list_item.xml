@@ -42,4 +42,14 @@
         android:text="Last updated: N/A"
         android:layout_marginTop="2dp"/>
 
+    <!-- ADD THIS BUTTON -->
+    <Button
+        android:id="@+id/button_details"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/details_button_text"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_gravity="end"
+        android:layout_marginTop="8dp"/>
+
 </LinearLayout>

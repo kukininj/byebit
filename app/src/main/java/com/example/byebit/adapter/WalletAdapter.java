@@ -17,6 +17,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 // java.math.BigDecimal import is not strictly needed here if only calling toPlainString()
+import android.widget.Button;
+import java.math.RoundingMode;
+import android.text.format.DateUtils;
 
 public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletViewHolder> {
 
@@ -37,6 +40,14 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
     // ADD: Field for long click listener
     private OnItemLongClickListener longClickListener;
 
+    // Add this interface definition inside the WalletAdapter class
+    public interface OnDetailsClickListener {
+        void onDetailsClick(WalletHandle wallet);
+    }
+
+    // Add this field inside the WalletAdapter class
+    private OnDetailsClickListener detailsClickListener;
+
 
     @NonNull
     @Override
@@ -52,29 +63,23 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
         holder.textViewName.setText(currentWallet.getName());
         holder.textViewAddress.setText(currentWallet.getAddress());
 
-        // Set the balance text
         if (currentWallet.getBalance() != null) {
-            // MODIFIED: Convert BigDecimal to String for display using toPlainString()
-            // TODO: Consider formatting the balance (e.g., Wei to Ether)
-            // For now, displaying the raw string value from the database.
-            // You might want to add units like "ETH" or "Wei"
-            holder.textViewBalance.setText("Balance: " + currentWallet.getBalance().toPlainString());
+            String balanceStr = currentWallet.getBalance().setScale(4, RoundingMode.HALF_UP).toPlainString() + " ETH";
+            holder.textViewBalance.setText("Balance: " + balanceStr);
         } else {
-            // Handle case where balance might be null (e.g., still loading or error)
-            // This is less likely if initialized to BigDecimal.ZERO
             holder.textViewBalance.setText("Balance: N/A");
         }
 
-        // START ADDED CODE for balance last updated
         Long lastUpdatedTimestamp = currentWallet.getBalanceLastUpdated();
         if (lastUpdatedTimestamp != null && lastUpdatedTimestamp > 0) {
-            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm:ss", Locale.getDefault());
-            String lastUpdatedDate = sdf.format(new Date(lastUpdatedTimestamp));
-            holder.textViewBalanceLastUpdated.setText("Last updated: " + lastUpdatedDate);
+            CharSequence lastUpdatedStr = DateUtils.getRelativeTimeSpanString(
+                    lastUpdatedTimestamp,
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS);
+            holder.textViewBalanceLastUpdated.setText("Last updated: " + lastUpdatedStr);
         } else {
             holder.textViewBalanceLastUpdated.setText("Last updated: N/A");
         }
-        // END ADDED CODE for balance last updated
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -90,6 +95,14 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
             }
             return false;
         });
+
+        if (holder.buttonDetails != null) {
+            holder.buttonDetails.setOnClickListener(v -> {
+                if (detailsClickListener != null) {
+                    detailsClickListener.onDetailsClick(currentWallet);
+                }
+            });
+        }
     }
 
     @Override
@@ -113,6 +126,11 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
         this.longClickListener = listener;
     }
 
+    // Add this setter method inside the WalletAdapter class
+    public void setOnDetailsClickListener(OnDetailsClickListener listener) {
+        this.detailsClickListener = listener;
+    }
+
 
     // ViewHolder class
     static class WalletViewHolder extends RecyclerView.ViewHolder {
@@ -122,6 +140,7 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
         private final TextView textViewBalance;
         // ADD THIS field for the balance last updated TextView
         private final TextView textViewBalanceLastUpdated;
+        private final Button buttonDetails; // ADD THIS
 
         public WalletViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -131,6 +150,7 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
             textViewBalance = itemView.findViewById(R.id.wallet_balance);
             // INITIALIZE the balance last updated TextView
             textViewBalanceLastUpdated = itemView.findViewById(R.id.wallet_balance_last_updated);
+            buttonDetails = itemView.findViewById(R.id.button_details); // INITIALIZE THIS
         }
     }
 }

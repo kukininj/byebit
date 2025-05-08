@@ -14,6 +14,7 @@
 
     <!-- ADD THIS STRING -->
     <string name="export_wallets">Export Wallets</string>
+    <string name="details_button_text">Details</string>
 
     <!-- Sepolia RPC URL -->
     <string name="sepolia_rpc_url">https://sepolia.drpc.org</string>
@@ -25,5 +26,27 @@
     <string name="delete_wallet_dialog_negative_button">Cancel</string>
     <string name="wallet_deleted_toast">Wallet deleted</string>
     <string name="wallet_deletion_failed_toast">Failed to delete wallet</string>
+
+    <!-- New strings for Wallet Details Dialog and Password Prompt -->
+    <string name="enter_password_for_wallet">Enter Password for %s</string>
+    <string name="password_hint">Password</string>
+    <string name="ok_button">OK</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="password_cannot_be_empty">Password cannot be empty</string>
+    <string name="wallet_details_title">Details: %s</string>
+    <string name="wallet_address_label">Address:</string>
+    <string name="private_key_label">Private Key (Hex):</string>
+    <string name="delete_wallet_button_details">Delete This Wallet</string>
+    <string name="copy_private_key_button">Copy Key</string>
+    <string name="close_button">Close</string>
+    <string name="confirm_delete_wallet_title">Confirm Delete</string>
+    <string name="confirm_delete_wallet_message">Permanently delete wallet \'%s\'?</string>
+    <string name="delete_button_confirm">Delete</string>
+    <string name="private_key_copied_toast">Private Key copied</string>
+    <string name="failed_to_copy_private_key_toast">Failed to copy Private Key</string>
+    <string name="wallet_deleted_toast_param">Wallet \'%s\' deleted.</string>
+    <!-- Balance related strings, can be reused or added if not present -->
+    <string name="balance_not_available">Balance: N/A</string>
+    <string name="last_updated_format">Updated: %s</string>
 
 </resources>

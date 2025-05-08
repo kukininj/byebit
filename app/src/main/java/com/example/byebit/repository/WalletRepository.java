@@ -80,6 +80,14 @@ public class WalletRepository {
         return walletHandle;
     }
 
+    public Credentials getCredentials(WalletHandle walletHandle, String password) throws IOException, CipherException {
+        File walletFile = new File(walletsDir, walletHandle.getFilename());
+        if (!walletFile.exists()) {
+            throw new IOException("Wallet file not found: " + walletFile.getAbsolutePath());
+        }
+        return WalletUtils.loadCredentials(password, walletFile);
+    }
+
     // Add a method to get balance for a given address
     // This method returns LiveData and performs the network call on the executor
     public void getWalletBalance(String address) {
