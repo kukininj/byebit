@@ -11,11 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.byebit.R;
 import com.example.byebit.domain.WalletHandle;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 // java.math.BigDecimal import is not strictly needed here if only calling toPlainString()
 import android.widget.Button;
 import java.math.RoundingMode;
@@ -34,7 +31,6 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
 
     // ADD: Interface for long click listener
     public interface OnItemLongClickListener {
-        void onItemLongClick(WalletHandle wallet);
     }
 
     // ADD: Field for long click listener
@@ -85,15 +81,6 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
             if (listener != null) {
                 listener.onItemClick(currentWallet);
             }
-        });
-
-        // ADD: Set the long click listener
-        holder.itemView.setOnLongClickListener(v -> {
-            if (longClickListener != null) {
-                longClickListener.onItemLongClick(currentWallet);
-                return true; // Consume the long click
-            }
-            return false;
         });
 
         if (holder.buttonDetails != null) {
