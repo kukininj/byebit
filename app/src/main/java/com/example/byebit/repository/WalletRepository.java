@@ -62,14 +62,14 @@ public class WalletRepository {
 
     // Note: This method still needs to be called off the main thread
     // because WalletUtils operations can be blocking.
-    public WalletHandle createNewWallet(String name, String password) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
+    public WalletHandle createNewWallet(String name, String password, byte[] encryptedPassword, byte[] iv) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
         // Generate the wallet file and load credentials to get the address
         String filename = WalletUtils.generateLightNewWalletFile(password, walletsDir);
         Credentials credentials = WalletUtils.loadCredentials(password, new File(walletsDir, filename));
         String address = credentials.getAddress();
 
         // Create the WalletHandle entity
-        WalletHandle walletHandle = new WalletHandle(UUID.randomUUID(), name, filename, address);
+        WalletHandle walletHandle = new WalletHandle(UUID.randomUUID(), name, filename, address, encryptedPassword, iv);
 
         // Save the WalletHandle to the database using the executor
         databaseWriteExecutor.execute(() -> {
@@ -77,7 +77,6 @@ public class WalletRepository {
             Log.d(TAG, "Inserted new wallet into DB: " + walletHandle.getName()); // Log DB insert
         });
 
-        // Return the created WalletHandle (note: ID might not be set immediately if insert is async)
         return walletHandle;
     }
 

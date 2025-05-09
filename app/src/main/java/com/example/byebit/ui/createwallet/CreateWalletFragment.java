@@ -7,23 +7,27 @@ import android.view.ViewGroup;
 import android.widget.Toast; // Import Toast
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable; // Import Nullable
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController; // Import NavController
 import androidx.navigation.Navigation; // Import Navigation helper
 
 import com.example.byebit.databinding.FragmentCreateWalletBinding;
+import com.example.byebit.security.AuthenticationFailureReason;
+import com.example.byebit.security.AuthenticationListener;
+import com.example.byebit.security.BiometricService;
 
 public class CreateWalletFragment extends Fragment {
 
     private FragmentCreateWalletBinding binding;
     private CreateWalletViewModel createWalletViewModel;
+    private BiometricService biometricService;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         createWalletViewModel = new ViewModelProvider(this).get(CreateWalletViewModel.class);
+        biometricService = new BiometricService(this);
 
         binding = FragmentCreateWalletBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
@@ -91,11 +95,24 @@ public class CreateWalletFragment extends Fragment {
             isValid = false;
         }
 
-        // Add more password strength validation if needed
-
         if (isValid) {
             // Call ViewModel to create the wallet
-            createWalletViewModel.createWallet(name, password);
+            biometricService.encrypt(name, password, new AuthenticationListener() {
+                @Override
+                public void onSuccess(byte[] result, byte[] iv) {
+                    createWalletViewModel.createWallet(name, password, result, iv);
+                }
+
+                @Override
+                public void onFailure(AuthenticationFailureReason reason) {
+                    // :((
+                }
+
+                @Override
+                public void onCancel() {
+
+                }
+            });
         }
     }
 

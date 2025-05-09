@@ -49,4 +49,7 @@
     <string name="balance_not_available">Balance: N/A</string>
     <string name="last_updated_format">Updated: %s</string>
 
+    <string name="biometric_unlock_fail_fallback">Biometric unlock failed, using fallback input</string>
+    <string name="wallet_unlock_cancelled">Wallet unlock cancelled</string>
+
 </resources>

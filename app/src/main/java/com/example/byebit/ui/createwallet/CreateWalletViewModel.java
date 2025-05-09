@@ -42,7 +42,7 @@ public class CreateWalletViewModel extends AndroidViewModel {
         executorService = Executors.newFixedThreadPool(2); // Adjust pool size as needed
     }
 
-    public void createWallet(String name, String password) {
+    public void createWallet(String name, String password, byte[] encryptedPassword, byte[] iv) {
         _isLoading.setValue(true); // Indicate loading started
         _creationResult.setValue(CreationResult.loading()); // Set loading state
 
@@ -50,7 +50,7 @@ public class CreateWalletViewModel extends AndroidViewModel {
             try {
                 // Call the repository method on a background thread
                 // The repository itself handles the DB insert on its own executor
-                WalletHandle newWallet = walletRepository.createNewWallet(name, password);
+                WalletHandle newWallet = walletRepository.createNewWallet(name, password, encryptedPassword, iv);
                 // Post success result back to the main thread
                 _creationResult.postValue(CreationResult.success(newWallet));
             } catch (InvalidAlgorithmParameterException | CipherException | NoSuchAlgorithmException | IOException | NoSuchProviderException e) {

@@ -50,16 +50,21 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.example.byebit.databinding.FragmentDashboardBinding;
 import com.example.byebit.domain.WalletHandle; // ADD
+import com.example.byebit.security.AuthenticationFailureReason;
+import com.example.byebit.security.AuthenticationListener;
+import com.example.byebit.security.BiometricService;
 
 import java.io.File; // ADD
 import java.io.FileInputStream; // ADD
 import java.io.IOException; // ADD
 import java.io.OutputStream; // ADD
+import java.nio.charset.StandardCharsets;
 import java.util.List; // ADD
 import java.util.concurrent.ExecutorService; // ADD
 import java.util.concurrent.Executors; // ADD
 import java.util.zip.ZipEntry; // ADD
 import java.util.zip.ZipOutputStream; // ADD
+
 
 // ADD THIS IMPORT if not already present for R.id.fab_export_wallets
 
@@ -70,9 +75,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     private FragmentDashboardBinding binding;
     private DashboardViewModel dashboardViewModel; // Make ViewModel accessible
     private WalletAdapter walletAdapter; // Adapter for the RecyclerView
+    private BiometricService biometricService;
 
     // ADD THESE MEMBER VARIABLES
-    private static final String TAG = "DashboardFragmentExport"; // For logging, changed slightly to avoid conflict if TAG exists
+    private static final String TAG = "DashboardFragment"; // MODIFIED: For logging
     private static final String DEFAULT_EXPORT_FILE_NAME = "byebit_wallets_export.zip";
     private ActivityResultLauncher<Intent> exportWalletsLauncher;
     private List<WalletHandle> walletsToExportHolder; // To hold wallets between SAF launch and result
@@ -86,6 +92,8 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true); // ADD THIS LINE to indicate the fragment has menu items
+
+        biometricService = new BiometricService(this);
 
         // ViewModel is initialized in onCreateView, which is fine.
         // Initialize ActivityResultLauncher here
@@ -191,16 +199,23 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
             if (result == null) return;
 
             if (result.isLoading()) {
-                Toast.makeText(getContext(), "Loading wallet details...", Toast.LENGTH_SHORT).show();
+                // MODIFIED: Add context check for Toast
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Loading wallet details...", Toast.LENGTH_SHORT).show();
+                }
             } else if (result.isError()) {
-                Toast.makeText(getContext(), "Error: " + result.getError(), Toast.LENGTH_LONG).show();
+                // MODIFIED: Add context check for Toast and logging
+                Log.w(TAG, "Failed to load credentials for wallet " + (this.currentWalletForDetails != null ? this.currentWalletForDetails.getName() : "N/A") + ": " + result.getError());
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error: " + result.getError(), Toast.LENGTH_LONG).show();
+                }
                 dashboardViewModel.clearCredentialsResult();
                 this.currentWalletForDetails = null;
             } else if (result.isSuccess() && result.getCredentials() != null) {
                 if (this.currentWalletForDetails != null) {
                     showWalletDetailsDialog(this.currentWalletForDetails, result.getCredentials());
                 } else {
-                    Log.e(TAG, "currentWalletForDetails is null when credentials result received.");
+                    Log.e(TAG, "currentWalletForDetails is null when credentials result received successfully.");
                 }
                 dashboardViewModel.clearCredentialsResult();
             }
@@ -248,12 +263,38 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         walletAdapter.setOnDetailsClickListener(this); // SET THE NEW LISTENER
     }
 
-
     @Override
     public void onDetailsClick(WalletHandle wallet) {
         if (getContext() == null) return;
         this.currentWalletForDetails = wallet;
 
+        biometricService.decrypt(wallet, new AuthenticationListener() {
+            @Override
+            public void onSuccess(byte[] result, byte[] iv) {
+                String password = new String(result, StandardCharsets.UTF_8);
+                dashboardViewModel.loadCredentialsForWallet(wallet, password);
+            }
+
+            @Override
+            public void onFailure(AuthenticationFailureReason reason) {
+                // ADDED: Log the specific reason for failure
+                Log.w(TAG, "Biometric decryption failed for wallet " + (wallet != null ? wallet.getName() : "null") + ". Reason: " + reason.name());
+                if (getContext() != null) { // ADDED: Context null check before Toast
+                    Toast.makeText(getContext(), R.string.biometric_unlock_fail_fallback, Toast.LENGTH_SHORT).show();
+                }
+                showFallbackPasswordInput(wallet);
+            }
+
+            @Override
+            public void onCancel() {
+                if (getContext() != null) { // ADDED: Context null check before Toast
+                    Toast.makeText(getContext(), R.string.wallet_unlock_cancelled, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void showFallbackPasswordInput(WalletHandle wallet) {
         AlertDialog.Builder passwordDialogBuilder = new AlertDialog.Builder(requireContext());
         passwordDialogBuilder.setTitle(getString(R.string.enter_password_for_wallet, wallet.getName()));
 
@@ -356,26 +397,35 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
     // ADD THIS METHOD
     private void zipWalletsToUri(Uri destinationUri, List<WalletHandle> wallets) {
-        if (getContext() == null) {
-            Log.e(TAG, "Context is null in zipWalletsToUri. Aborting.");
-            Toast.makeText(requireActivity().getApplicationContext(), "Export failed: Internal error (context lost)", Toast.LENGTH_LONG).show();
+        // ... (existing initial context check and Toast) ...
+        if (getContext() == null) { // Ensure getContext() is checked before Toast
+            Log.e(TAG, "Context is null at the beginning of zipWalletsToUri. Aborting.");
+            // Attempt to use activity's application context for critical error Toast if fragment context is gone
+            Activity activity = getActivity();
+            if (activity != null && activity.getApplicationContext() != null) {
+                Toast.makeText(activity.getApplicationContext(), "Export failed: Internal error (context lost)", Toast.LENGTH_LONG).show();
+            }
             return;
         }
-        Toast.makeText(getContext(), "Exporting wallets...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Exporting wallets...", Toast.LENGTH_SHORT).show(); // Safe now due to above check
+
         executorService.execute(() -> {
             boolean success = false;
             String errorMessage = null;
-            File walletsDir = null; // Declare here for broader scope in try-catch
+            File walletsDir = null;
 
             try {
-                // Ensure context is still valid inside executor
                 Context currentContext = getContext();
                 if (currentContext == null) {
                     throw new IOException("Context became null during background execution.");
                 }
                 walletsDir = currentContext.getFilesDir();
+                // ADDED: Explicit null check for walletsDir
+                if (walletsDir == null) {
+                    throw new IOException("Failed to get application files directory (walletsDir is null).");
+                }
                 if (!walletsDir.exists() || !walletsDir.isDirectory()) {
-                    throw new IOException("Wallets directory not found at: " + walletsDir.getAbsolutePath());
+                    throw new IOException("Wallets directory not found or is not a directory at: " + walletsDir.getAbsolutePath());
                 }
 
                 try (OutputStream fos = currentContext.getContentResolver().openOutputStream(destinationUri);

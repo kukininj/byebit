@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey;
 
 // Add this import
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 // Note: @TypeConverters annotation is now on AppDatabase
@@ -30,6 +31,10 @@ public class WalletHandle {
 
     private Long balanceLastUpdated;
 
+    private final byte[] encryptedPassword;
+
+    private final byte[] iv;
+
     public Long getBalanceLastUpdated() {
         return balanceLastUpdated;
     }
@@ -39,11 +44,13 @@ public class WalletHandle {
     }
 
     // Constructor updated for Room compatibility and new fields
-    public WalletHandle(@NonNull UUID id, @NonNull String name, @NonNull String filename, @NonNull String address) {
+    public WalletHandle(@NonNull UUID id, @NonNull String name, @NonNull String filename, @NonNull String address, byte[] encryptedPassword, byte[] iv) {
         this.id = id;
         this.name = name;
         this.filename = filename;
         this.address = address;
+        this.encryptedPassword = encryptedPassword;
+        this.iv = iv;
         // MODIFIED: Initialize balance with BigDecimal.ZERO
         this.balance = BigDecimal.ZERO;
     }
@@ -77,5 +84,13 @@ public class WalletHandle {
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
+    }
+
+    public byte[] getEncryptedPassword() {
+        return encryptedPassword;
+    }
+
+    public byte[] getIv() {
+        return iv;
     }
 }
