@@ -96,11 +96,11 @@ public class CreateWalletFragment extends Fragment {
             isValid = false;
         }
 
-        if (isValid) {
+        if (isValid && savePassword) {
             biometricService.encrypt(name, password, new AuthenticationListener() {
                 @Override
                 public void onSuccess(byte[] result, byte[] iv) {
-                    createWalletViewModel.createWallet(name, password, result, iv, savePassword);
+                    createWalletViewModel.createWallet(name, password, result, iv);
                 }
 
                 @Override
@@ -113,6 +113,8 @@ public class CreateWalletFragment extends Fragment {
                     Toast.makeText(getContext(), "Biometric authentication cancelled", Toast.LENGTH_SHORT).show();
                 }
             });
+        } else if (isValid && !savePassword) {
+            createWalletViewModel.createWallet(name, password, null, null);
         }
     }
 

@@ -6,6 +6,8 @@ import android.util.Log; // Import Log
 import com.example.byebit.R; // Import R to access resources
 import com.example.byebit.config.AppDatabase;
 import com.example.byebit.dao.WalletHandleDao;
+
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData; // Import MutableLiveData
 
@@ -76,7 +78,7 @@ public class WalletRepository {
      * @throws NoSuchProviderException
      */
     // MODIFY THIS METHOD SIGNATURE TO ACCEPT savePassword BOOLEAN
-    public WalletHandle createNewWallet(String name, String password, byte[] encryptedPassword, byte[] iv, boolean savePassword) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
+    public WalletHandle createNewWallet(String name, String password, @Nullable byte[] encryptedPassword, @Nullable byte[] iv) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
         Log.d(TAG, "Creating new wallet file..."); // Add log
         // Generate the wallet file and load credentials to get the address
         String filename = WalletUtils.generateLightNewWalletFile(password, walletsDir);
@@ -90,13 +92,6 @@ public class WalletRepository {
         // Save the WalletHandle to the database using the executor
         databaseWriteExecutor.execute(() -> {
             // ADD THIS CONDITIONAL LOGIC
-            if (!savePassword) {
-                Log.d(TAG, "User opted out of saving password, setting encryptedPassword and iv to null.");
-                walletHandle.setEncryptedPassword(null);
-                walletHandle.setIv(null);
-            } else {
-                 Log.d(TAG, "User opted to save password, saving encryptedPassword and iv.");
-            }
             walletHandleDao.insertAll(walletHandle);
             Log.d(TAG, "Inserted new wallet into DB: " + walletHandle.getName()); // Log DB insert
         });

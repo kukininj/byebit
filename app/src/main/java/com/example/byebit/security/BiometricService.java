@@ -212,13 +212,8 @@ public class BiometricService {
 
             biometricPrompt.authenticate(promptInfo, new BiometricPrompt.CryptoObject(cipher));
 
-        } catch (KeyStoreException | CertificateException | IOException | NoSuchAlgorithmException |
-                 InvalidKeyException | InvalidAlgorithmParameterException | NoSuchPaddingException |
-                 UnrecoverableKeyException e) {
+        } catch (IOException | GeneralSecurityException e) {
             Log.e(TAG, "Error setting up encryption: " + e.getMessage(), e);
-            listener.onFailure(AuthenticationFailureReason.CRYPTO_SETUP_FAILED);
-        } catch (GeneralSecurityException e) {
-            Log.e(TAG, "Security error during encryption setup: " + e.getMessage(), e);
             listener.onFailure(AuthenticationFailureReason.CRYPTO_SETUP_FAILED);
         }
     }

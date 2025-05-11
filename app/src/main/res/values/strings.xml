@@ -64,4 +64,6 @@
     <string name="wallet_unlock_cancelled_or_failed">Wallet unlock cancelled or failed.</string>
     <string name="wallet_unlock_error">An error occurred during wallet unlock.</string>
 
+    <string name="checkbox_save_password">Save password for quick unlock</string>
+
 </resources>

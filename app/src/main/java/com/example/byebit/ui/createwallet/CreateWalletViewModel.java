@@ -2,6 +2,8 @@ package com.example.byebit.ui.createwallet;
 
 import android.app.Application;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -26,11 +28,13 @@ public class CreateWalletViewModel extends AndroidViewModel {
     private final ExecutorService executorService;
 
     private final MutableLiveData<CreationResult> _creationResult = new MutableLiveData<>();
+
     public LiveData<CreationResult> getCreationResult() {
         return _creationResult;
     }
 
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
+
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
@@ -42,16 +46,17 @@ public class CreateWalletViewModel extends AndroidViewModel {
         executorService = Executors.newFixedThreadPool(1);
     }
 
-    public void createWallet(String name, String password, byte[] encryptedPassword, byte[] iv, boolean savePassword) {
+    public void createWallet(String name, String password, @Nullable byte[] encryptedPassword, @Nullable byte[] iv) {
         _isLoading.setValue(true);
         _creationResult.setValue(CreationResult.loading());
 
         executorService.execute(() -> {
             try {
-                WalletHandle newWallet = walletRepository.createNewWallet(name, password, encryptedPassword, iv, savePassword);
+                WalletHandle newWallet = walletRepository.createNewWallet(name, password, encryptedPassword, iv);
                 _creationResult.postValue(CreationResult.success(newWallet));
                 Log.d(TAG, "Wallet creation task completed successfully.");
-            } catch (InvalidAlgorithmParameterException | CipherException | NoSuchAlgorithmException | IOException | NoSuchProviderException e) {
+            } catch (InvalidAlgorithmParameterException | CipherException |
+                     NoSuchAlgorithmException | IOException | NoSuchProviderException e) {
                 Log.e(TAG, "Error creating wallet", e);
                 _creationResult.postValue(CreationResult.error(e.getMessage()));
             } finally {
