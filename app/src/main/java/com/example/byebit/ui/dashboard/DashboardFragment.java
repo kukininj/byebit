@@ -2,15 +2,15 @@ package com.example.byebit.ui.dashboard;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.app.Activity; // ADD
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent; // ADD
-import android.net.Uri; // ADD
-import android.os.Handler; // ADD
-import android.os.Looper; // ADD
-import android.util.Log; // ADD
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 // Menu, MenuInflater, MenuItem are kept as they are used by MenuProvider methods
 import android.view.Menu;
@@ -25,10 +25,9 @@ import android.text.InputType;
 import org.web3j.crypto.Credentials;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher; // ADD
-import androidx.activity.result.contract.ActivityResultContracts; // ADD
-// Remove TextView import if no longer needed
-// import android.widget.TextView;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable; // Import Nullable
@@ -41,48 +40,39 @@ import androidx.navigation.Navigation; // Import Navigation helper
 
 import com.example.byebit.R;
 import com.example.byebit.adapter.WalletAdapter;
-// ADD: AlertDialog import
 import androidx.appcompat.app.AlertDialog;
-// import android.os.Bundle; // Already present
-// import android.view.LayoutInflater; // Already present
 
-// Remove TextView import if no longer needed
-// import android.widget.TextView;
 
-// import androidx.recyclerview.widget.LinearLayoutManager; // Already present
-// import androidx.recyclerview.widget.RecyclerView; // Already present
+
 
 import com.example.byebit.databinding.FragmentDashboardBinding;
-import com.example.byebit.domain.WalletHandle; // ADD
+import com.example.byebit.domain.WalletHandle;
 import com.example.byebit.security.AuthenticationFailureReason;
 import com.example.byebit.security.AuthenticationListener;
 import com.example.byebit.security.BiometricService;
 
-import java.io.File; // ADD
-import java.io.FileInputStream; // ADD
-import java.io.IOException; // ADD
-import java.io.OutputStream; // ADD
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List; // ADD
-import java.util.concurrent.ExecutorService; // ADD
-import java.util.concurrent.Executors; // ADD
-import java.util.zip.ZipEntry; // ADD
-import java.util.zip.ZipOutputStream; // ADD
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 
-// ADD THIS IMPORT if not already present for R.id.fab_export_wallets
 
 
-// IMPLEMENT the WalletAdapter.OnItemLongClickListener interface AND MenuProvider
 public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener, WalletAdapter.OnDetailsClickListener, MenuProvider {
 
     private FragmentDashboardBinding binding;
-    private DashboardViewModel dashboardViewModel; // Make ViewModel accessible
-    private WalletAdapter walletAdapter; // Adapter for the RecyclerView
+    private DashboardViewModel dashboardViewModel;
+    private WalletAdapter walletAdapter;
     private BiometricService biometricService;
 
-    // ADD THESE MEMBER VARIABLES
-    private static final String TAG = "DashboardFragment"; // MODIFIED: For logging
+    private static final String TAG = "DashboardFragment";
     private static final String DEFAULT_EXPORT_FILE_NAME = "byebit_wallets_export.zip";
     private ActivityResultLauncher<Intent> exportWalletsLauncher;
     private List<WalletHandle> walletsToExportHolder; // To hold wallets between SAF launch and result
@@ -91,16 +81,12 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
     private WalletHandle currentWalletForDetails;
 
-    // ADD THIS ENTIRE onCreate METHOD
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // setHasOptionsMenu(true); // REMOVED: No longer needed with MenuProvider
 
         biometricService = new BiometricService(this);
 
-        // ViewModel is initialized in onCreateView, which is fine.
-        // Initialize ActivityResultLauncher here
         exportWalletsLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -123,33 +109,23 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         );
     }
 
-    // onCreateOptionsMenu and onOptionsItemSelected are removed and replaced by MenuProvider methods.
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        // Initialize ViewModel
         dashboardViewModel = new ViewModelProvider(this).get(DashboardViewModel.class);
 
-        // Inflate layout using view binding
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Setup RecyclerView
         setupRecyclerView();
 
-        // Remove old TextView observation
-        // final TextView textView = binding.textDashboard;
-        // dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
-        // Set click listener for the create wallet FAB
         binding.fabCreateWallet.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(v);
-            // MODIFIED: Use R.id directly as R should be imported
             navController.navigate(R.id.action_dashboard_to_createWalletFragment);
         });
 
-        // MODIFY THIS CLICK LISTENER
         binding.fabExportWallets.setOnClickListener(v -> {
             // Ensure ViewModel is available and LiveData has a value
             if (dashboardViewModel != null && dashboardViewModel.getSavedWallets().getValue() != null) {
@@ -173,11 +149,9 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // ADD MenuProvider
         MenuHost menuHost = requireActivity();
         menuHost.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
-        // Observe the LiveData from the ViewModel
         dashboardViewModel.getSavedWallets().observe(getViewLifecycleOwner(), wallets -> {
             // Update the adapter's data when the wallet list changes
             if (wallets != null) {
@@ -189,12 +163,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
             if (result == null) return;
 
             if (result.isLoading()) {
-                // MODIFIED: Add context check for Toast
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Loading wallet details...", Toast.LENGTH_SHORT).show();
                 }
             } else if (result.isError()) {
-                // MODIFIED: Add context check for Toast and logging
                 Log.w(TAG, "Failed to load credentials for wallet " + (this.currentWalletForDetails != null ? this.currentWalletForDetails.getName() : "N/A") + ": " + result.getError());
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Error: " + result.getError(), Toast.LENGTH_LONG).show();
@@ -213,44 +185,32 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     }
 
     private void setupRecyclerView() {
-        RecyclerView recyclerView = binding.recyclerViewWallets; // Get RecyclerView from binding
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext())); // Set LayoutManager
+        RecyclerView recyclerView = binding.recyclerViewWallets;
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setHasFixedSize(true); // Optimization if item size doesn't change
 
-        walletAdapter = new WalletAdapter(); // Create the adapter
-        recyclerView.setAdapter(walletAdapter); // Set the adapter
+        walletAdapter = new WalletAdapter();
+        recyclerView.setAdapter(walletAdapter);
 
-        // Set the item click listener
         walletAdapter.setOnItemClickListener(wallet -> {
-            // Get the wallet address
             String walletAddress = wallet.getAddress();
 
-            // Get the clipboard manager
             ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
 
-            // Create a ClipData object
             ClipData clip = ClipData.newPlainText("Wallet Address", walletAddress);
 
-            // Set the clip data to the clipboard
             if (clipboard != null) {
                 clipboard.setPrimaryClip(clip);
-                // Show a confirmation message
                 Toast.makeText(getContext(), "Address copied to clipboard", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), "Failed to copy address", Toast.LENGTH_SHORT).show();
             }
 
-            // --- Add logic to fetch and display balance ---
-            // Request the balance from the ViewModel
-            // We observe it here directly for simplicity, but in a complex app,
-            // you might manage this observation differently (e.g., in a detail fragment)
             dashboardViewModel.fetchBalanceForAddress(walletAddress);
-            // --- End of balance fetching logic ---
         });
 
-        // ADD: Set the long click listener
         walletAdapter.setOnItemLongClickListener(this);
-        walletAdapter.setOnDetailsClickListener(this); // SET THE NEW LISTENER
+        walletAdapter.setOnDetailsClickListener(this);
     }
 
     @Override
@@ -267,9 +227,8 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
             @Override
             public void onFailure(AuthenticationFailureReason reason) {
-                // ADDED: Log the specific reason for failure
                 Log.w(TAG, "Biometric decryption failed for wallet " + (wallet != null ? wallet.getName() : "null") + ". Reason: " + reason.name());
-                if (getContext() != null) { // ADDED: Context null check before Toast
+                if (getContext() != null) {
                     Toast.makeText(getContext(), R.string.biometric_unlock_fail_fallback, Toast.LENGTH_SHORT).show();
                 }
                 showFallbackPasswordInput(wallet);
@@ -277,7 +236,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
             @Override
             public void onCancel() {
-                if (getContext() != null) { // ADDED: Context null check before Toast
+                if (getContext() != null) {
                     Toast.makeText(getContext(), R.string.wallet_unlock_cancelled, Toast.LENGTH_SHORT).show();
                 }
             }
@@ -368,7 +327,6 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         detailsDialogBuilder.show();
     }
 
-    // ADD THIS METHOD
     private void launchSaveZipFilePicker() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -385,10 +343,8 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         }
     }
 
-    // ADD THIS METHOD
     private void zipWalletsToUri(Uri destinationUri, List<WalletHandle> wallets) {
-        // ... (existing initial context check and Toast) ...
-        if (getContext() == null) { // Ensure getContext() is checked before Toast
+        if (getContext() == null) {
             Log.e(TAG, "Context is null at the beginning of zipWalletsToUri. Aborting.");
             // Attempt to use activity's application context for critical error Toast if fragment context is gone
             Activity activity = getActivity();
@@ -397,7 +353,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
             }
             return;
         }
-        Toast.makeText(getContext(), "Exporting wallets...", Toast.LENGTH_SHORT).show(); // Safe now due to above check
+        Toast.makeText(getContext(), "Exporting wallets...", Toast.LENGTH_SHORT).show();
 
         executorService.execute(() -> {
             boolean success = false;
@@ -410,7 +366,6 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
                     throw new IOException("Context became null during background execution.");
                 }
                 walletsDir = currentContext.getFilesDir();
-                // ADDED: Explicit null check for walletsDir
                 if (walletsDir == null) {
                     throw new IOException("Failed to get application files directory (walletsDir is null).");
                 }
@@ -463,7 +418,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
             final boolean finalSuccess = success;
             final String finalErrorMessage = errorMessage;
             mainThreadHandler.post(() -> {
-                if (getContext() != null) { // Check context again before showing Toast
+                if (getContext() != null) {
                     if (finalSuccess) {
                         Toast.makeText(getContext(), "Wallets exported successfully!", Toast.LENGTH_LONG).show();
                     } else {
@@ -476,20 +431,16 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         });
     }
 
-    // ADD MenuProvider methods
     @Override
     public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-        // Inflate the menu items for the action bar
         menuInflater.inflate(R.menu.dashboard_menu, menu);
     }
 
     @Override
     public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
-        // Handle action bar item clicks here.
         if (menuItem.getItemId() == R.id.action_refresh_balances) {
             if (dashboardViewModel != null) {
                 dashboardViewModel.refreshAllWalletBalances();
-                // Ensure context is not null before showing Toast
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Refreshing balances...", Toast.LENGTH_SHORT).show();
                 }
@@ -499,11 +450,9 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         return false; // Return false to allow other components to handle the event
     }
 
-    // ADD THIS METHOD (or add to existing onDestroy if you have one)
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Shutdown executor service
         if (executorService != null && !executorService.isShutdown()) {
             Log.d(TAG, "Shutting down executor service.");
             executorService.shutdown();
@@ -514,9 +463,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         super.onDestroyView();
         // MenuProvider is automatically removed when using getViewLifecycleOwner()
         // with addMenuProvider, so explicit removal is not strictly necessary.
-        // MenuHost menuHost = requireActivity();
-        // menuHost.removeMenuProvider(this);
         binding = null;
     }
 
-} // This is the closing brace of the DashboardFragment class
+}
