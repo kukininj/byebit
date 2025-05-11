@@ -12,10 +12,14 @@ import android.os.Handler; // ADD
 import android.os.Looper; // ADD
 import android.util.Log; // ADD
 import android.view.View;
-import android.view.Menu; // ADD THIS
-import android.view.MenuInflater; // ADD THIS
-import android.view.MenuItem; // ADD THIS
+// Menu, MenuInflater, MenuItem are kept as they are used by MenuProvider methods
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.ViewGroup;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
+import androidx.lifecycle.Lifecycle;
 import android.widget.EditText;
 import android.text.InputType;
 import org.web3j.crypto.Credentials;
@@ -69,8 +73,8 @@ import java.util.zip.ZipOutputStream; // ADD
 // ADD THIS IMPORT if not already present for R.id.fab_export_wallets
 
 
-// IMPLEMENT the WalletAdapter.OnItemLongClickListener interface
-public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener, WalletAdapter.OnDetailsClickListener {
+// IMPLEMENT the WalletAdapter.OnItemLongClickListener interface AND MenuProvider
+public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener, WalletAdapter.OnDetailsClickListener, MenuProvider {
 
     private FragmentDashboardBinding binding;
     private DashboardViewModel dashboardViewModel; // Make ViewModel accessible
@@ -91,7 +95,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true); // ADD THIS LINE to indicate the fragment has menu items
+        // setHasOptionsMenu(true); // REMOVED: No longer needed with MenuProvider
 
         biometricService = new BiometricService(this);
 
@@ -119,25 +123,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         );
     }
 
-    // ADD THIS METHOD to inflate the menu
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.dashboard_menu, menu);
-    }
-
-    // ADD THIS METHOD to handle menu item selections
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_refresh_balances) {
-            if (dashboardViewModel != null) {
-                dashboardViewModel.refreshAllWalletBalances();
-                Toast.makeText(getContext(), "Refreshing balances...", Toast.LENGTH_SHORT).show();
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+    // onCreateOptionsMenu and onOptionsItemSelected are removed and replaced by MenuProvider methods.
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -186,6 +172,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // ADD MenuProvider
+        MenuHost menuHost = requireActivity();
+        menuHost.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         // Observe the LiveData from the ViewModel
         dashboardViewModel.getSavedWallets().observe(getViewLifecycleOwner(), wallets -> {
@@ -486,6 +476,29 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         });
     }
 
+    // ADD MenuProvider methods
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        // Inflate the menu items for the action bar
+        menuInflater.inflate(R.menu.dashboard_menu, menu);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        // Handle action bar item clicks here.
+        if (menuItem.getItemId() == R.id.action_refresh_balances) {
+            if (dashboardViewModel != null) {
+                dashboardViewModel.refreshAllWalletBalances();
+                // Ensure context is not null before showing Toast
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Refreshing balances...", Toast.LENGTH_SHORT).show();
+                }
+            }
+            return true; // Indicate that the item selection event has been handled
+        }
+        return false; // Return false to allow other components to handle the event
+    }
+
     // ADD THIS METHOD (or add to existing onDestroy if you have one)
     @Override
     public void onDestroy() {
@@ -499,6 +512,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
     public void onDestroyView() {
         super.onDestroyView();
+        // MenuProvider is automatically removed when using getViewLifecycleOwner()
+        // with addMenuProvider, so explicit removal is not strictly necessary.
+        // MenuHost menuHost = requireActivity();
+        // menuHost.removeMenuProvider(this);
         binding = null;
     }
 
