@@ -40,6 +40,7 @@ import com.example.byebit.adapter.WalletAdapter;
 import androidx.appcompat.app.AlertDialog;
 // Assuming PasswordInputDialogFragment is in this package, user to verify
 import com.example.byebit.ui.dialog.PasswordInputDialogFragment;
+import com.example.byebit.ui.dialog.WalletUnlockDialogFragment;
 
 import com.example.byebit.ui.dialog.WalletDetailDialogResult;
 import com.example.byebit.ui.dialog.WalletDetailsDialogFragment;
@@ -289,63 +290,61 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
 
     @Override
     public void onDetailsClick(WalletHandle wallet) {
-        if (getContext() == null) return;
-        this.currentWalletForDetails = wallet;
+        if (getContext() == null || wallet == null) {
+            Log.w(TAG, "onDetailsClick called with null context or wallet.");
+            return;
+        }
+        this.currentWalletForDetails = wallet; // Set the context for the current operation
 
-        biometricService.decrypt(wallet, new AuthenticationListener() {
-            @Override
-            public void onSuccess(byte[] result, byte[] iv) {
-                String password = new String(result, StandardCharsets.UTF_8);
-                dashboardViewModel.loadCredentialsForWallet(wallet, password);
-            }
+        WalletUnlockDialogFragment walletUnlockDialog = WalletUnlockDialogFragment.newInstance(
+                this.currentWalletForDetails.getName(),
+                this.currentWalletForDetails.getEncryptedPassword(),
+                this.currentWalletForDetails.getIv()
+        );
 
-            @Override
-            public void onFailure(AuthenticationFailureReason reason) {
-                Log.w(TAG, "Biometric decryption failed for wallet " + (wallet != null ? wallet.getName() : "null") + ". Reason: " + reason.name());
-                Toast.makeText(getContext(), "Biometric authentication failed. Please enter password.", Toast.LENGTH_LONG).show();
-                if (getContext() != null) {
-                    // Ensure currentWalletForDetails is set for this attempt, as 'wallet' is the context.
-                    // It's already set at the beginning of onDetailsClick, but good to be mindful.
-                    // this.currentWalletForDetails = wallet; // Redundant if already set, but ensures context
+        disposables.add(walletUnlockDialog.getDialogEvents()
+                .observeOn(Schedulers.from(requireContext().getMainExecutor())) // Ensure UI updates on main thread
+                .subscribe(
+                        passwordResult -> {
+                            // Check if currentWalletForDetails is still valid for this operation.
+                            // It might have been cleared by another process or if the fragment is rapidly changing state.
+                            if (this.currentWalletForDetails == null || !this.currentWalletForDetails.getId().equals(wallet.getId())) {
+                                Log.w(TAG, "Wallet context changed or became null during unlock dialog operation for originally intended wallet: " + wallet.getName());
+                                // If currentWalletForDetails is null, or not the one we started with, abort this specific callback.
+                                // The new operation (if any) will have its own dialog and subscription.
+                                return;
+                            }
 
-                    PasswordInputDialogFragment passwordDialog = PasswordInputDialogFragment.newInstance(
-                            getString(R.string.enter_password_for_wallet, wallet.getName()),
-                            getString(R.string.password_hint),
-                            getString(R.string.ok_button)
-                    );
+                            if (passwordResult.isSuccess() && passwordResult.password != null) {
+                                dashboardViewModel.loadCredentialsForWallet(this.currentWalletForDetails, passwordResult.password);
+                                // currentWalletForDetails will be handled by the subsequent flow (e.g., WalletDetailsDialogFragment)
+                                // or if loadCredentialsForWallet itself clears it on error.
+                            } else { // Cancelled or other non-success from WalletUnlockDialogFragment
+                                Log.d(TAG, "Wallet unlock cancelled or failed for: " + this.currentWalletForDetails.getName());
+                                if (getContext() != null) { // Check context before Toast
+                                    Toast.makeText(getContext(), getString(R.string.wallet_unlock_cancelled_or_failed), Toast.LENGTH_SHORT).show();
+                                }
+                                this.currentWalletForDetails = null; // Clear wallet context as unlock failed/cancelled
+                            }
+                        },
+                        throwable -> {
+                            String walletNameForError = (this.currentWalletForDetails != null && this.currentWalletForDetails.getId().equals(wallet.getId()))
+                                                        ? this.currentWalletForDetails.getName()
+                                                        : wallet.getName(); // Fallback to original wallet name for log if context changed
+                            Log.e(TAG, "Error during wallet unlock process for: " + walletNameForError, throwable);
+                            if (getContext() != null) { // Check context before Toast
+                                Toast.makeText(getContext(), getString(R.string.wallet_unlock_error), Toast.LENGTH_LONG).show();
+                            }
+                            // Clear currentWalletForDetails if it was the one associated with this failed operation
+                            if (this.currentWalletForDetails != null && this.currentWalletForDetails.getId().equals(wallet.getId())) {
+                                this.currentWalletForDetails = null;
+                            }
+                        }
+                        // onComplete: WalletUnlockDialogFragment's subject completes when it's dismissed.
+                        // Clearing of currentWalletForDetails is handled in onNext/onError.
+                ));
 
-                    disposables.add(passwordDialog.getDialogEvents()
-                            .observeOn(Schedulers.from(getContext().getMainExecutor())) // Ensure UI updates are on the main thread
-                            .subscribe(
-                                    passwordDialogResult -> {
-                                        if (passwordDialogResult.isSuccess() && passwordDialogResult.password != null) {
-                                            dashboardViewModel.loadCredentialsForWallet(DashboardFragment.this.currentWalletForDetails, passwordDialogResult.password);
-                                        } else { // Cancelled or other non-success
-                                            Log.d(TAG, "Password input cancelled or failed for wallet: " + (DashboardFragment.this.currentWalletForDetails != null ? DashboardFragment.this.currentWalletForDetails.getName() : "N/A"));
-                                            Toast.makeText(getContext(), R.string.password_entry_cancelled, Toast.LENGTH_SHORT).show();
-                                            DashboardFragment.this.currentWalletForDetails = null; // Clear wallet context
-                                        }
-                                    },
-                                    throwable -> {
-                                        Log.e(TAG, "Error in password dialog stream for wallet: " + (DashboardFragment.this.currentWalletForDetails != null ? DashboardFragment.this.currentWalletForDetails.getName() : "N/A"), throwable);
-                                        Toast.makeText(getContext(), "Error obtaining password.", Toast.LENGTH_SHORT).show();
-                                        DashboardFragment.this.currentWalletForDetails = null; // Clear wallet context on error
-                                    }
-                                    // onComplete: Handled by onNext logic as PasswordInputDialogFragment emits success/cancel before completing.
-                            ));
-                    passwordDialog.show(getChildFragmentManager(), "PasswordInputDialogFragmentTag_Rx");
-                } else {
-                     Log.w(TAG, "Context was null, cannot show password dialog for wallet " + (wallet != null ? wallet.getName() : "null"));
-                }
-            }
-
-            @Override
-            public void onCancel() {
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), R.string.wallet_unlock_cancelled, Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        walletUnlockDialog.show(getChildFragmentManager(), "WalletUnlockDialogTag");
     }
 
     // showFallbackPasswordInput method is removed.

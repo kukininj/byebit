@@ -61,4 +61,7 @@
     <string name="unlock_wallet_enter_password">Enter password for %s</string>
     <string name="unlock_button">Unlock</string>
 
+    <string name="wallet_unlock_cancelled_or_failed">Wallet unlock cancelled or failed.</string>
+    <string name="wallet_unlock_error">An error occurred during wallet unlock.</string>
+
 </resources>
