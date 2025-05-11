@@ -1,6 +1,7 @@
 package com.example.byebit.ui.createwallet;
 
 import android.app.Application;
+import android.util.Log; // Import Log
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -19,6 +20,8 @@ import java.util.concurrent.Executors;
 
 public class CreateWalletViewModel extends AndroidViewModel {
 
+    private static final String TAG = "CreateWalletViewModel"; // Add TAG for logging
+
     private final WalletRepository walletRepository;
     private final ExecutorService executorService; // Executor for background tasks
 
@@ -29,7 +32,7 @@ public class CreateWalletViewModel extends AndroidViewModel {
     }
 
     // LiveData to indicate loading state
-    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false); // Initialize with false
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
@@ -42,7 +45,8 @@ public class CreateWalletViewModel extends AndroidViewModel {
         executorService = Executors.newFixedThreadPool(2); // Adjust pool size as needed
     }
 
-    public void createWallet(String name, String password, byte[] encryptedPassword, byte[] iv) {
+    // MODIFY THIS METHOD SIGNATURE TO ACCEPT savePassword BOOLEAN
+    public void createWallet(String name, String password, byte[] encryptedPassword, byte[] iv, boolean savePassword) {
         _isLoading.setValue(true); // Indicate loading started
         _creationResult.setValue(CreationResult.loading()); // Set loading state
 
@@ -50,15 +54,19 @@ public class CreateWalletViewModel extends AndroidViewModel {
             try {
                 // Call the repository method on a background thread
                 // The repository itself handles the DB insert on its own executor
-                WalletHandle newWallet = walletRepository.createNewWallet(name, password, encryptedPassword, iv);
+                // MODIFY THIS LINE TO PASS THE savePassword BOOLEAN
+                WalletHandle newWallet = walletRepository.createNewWallet(name, password, encryptedPassword, iv, savePassword);
                 // Post success result back to the main thread
                 _creationResult.postValue(CreationResult.success(newWallet));
+                Log.d(TAG, "Wallet creation task completed successfully."); // Add log
             } catch (InvalidAlgorithmParameterException | CipherException | NoSuchAlgorithmException | IOException | NoSuchProviderException e) {
                 // Post error result back to the main thread
+                Log.e(TAG, "Error creating wallet", e); // Log the error
                 _creationResult.postValue(CreationResult.error(e.getMessage()));
             } finally {
                 // Post loading finished back to the main thread
                 _isLoading.postValue(false);
+                Log.d(TAG, "Wallet creation task finished."); // Add log
             }
         });
     }
@@ -68,6 +76,7 @@ public class CreateWalletViewModel extends AndroidViewModel {
         super.onCleared();
         // Shut down the executor service when the ViewModel is no longer used
         executorService.shutdown();
+        Log.d(TAG, "ViewModel executor shut down."); // Add log
         // Also shut down the repository's executor if it's managed here
         walletRepository.shutdown();
     }

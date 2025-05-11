@@ -60,19 +60,43 @@ public class WalletRepository {
         return walletHandleDao.getAll();
     }
 
-    // Note: This method still needs to be called off the main thread
-    // because WalletUtils operations can be blocking.
-    public WalletHandle createNewWallet(String name, String password, byte[] encryptedPassword, byte[] iv) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
+    /**
+     * Creates a new Ethereum wallet file and saves its handle to the database.
+     *
+     * @param name The name for the wallet handle.
+     * @param password The password to encrypt the wallet file.
+     * @param encryptedPassword The password encrypted by biometric prompt (can be null).
+     * @param iv The IV used for biometric encryption (can be null).
+     * @param savePassword If true, encryptedPassword and iv are saved in the DB. If false, they are set to null before saving.
+     * @return The created WalletHandle entity.
+     * @throws InvalidAlgorithmParameterException
+     * @throws CipherException
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws NoSuchProviderException
+     */
+    // MODIFY THIS METHOD SIGNATURE TO ACCEPT savePassword BOOLEAN
+    public WalletHandle createNewWallet(String name, String password, byte[] encryptedPassword, byte[] iv, boolean savePassword) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
+        Log.d(TAG, "Creating new wallet file..."); // Add log
         // Generate the wallet file and load credentials to get the address
         String filename = WalletUtils.generateLightNewWalletFile(password, walletsDir);
         Credentials credentials = WalletUtils.loadCredentials(password, new File(walletsDir, filename));
         String address = credentials.getAddress();
+        Log.d(TAG, "Wallet file created: " + filename + ", Address: " + address); // Add log
 
         // Create the WalletHandle entity
         WalletHandle walletHandle = new WalletHandle(UUID.randomUUID(), name, filename, address, encryptedPassword, iv);
 
         // Save the WalletHandle to the database using the executor
         databaseWriteExecutor.execute(() -> {
+            // ADD THIS CONDITIONAL LOGIC
+            if (!savePassword) {
+                Log.d(TAG, "User opted out of saving password, setting encryptedPassword and iv to null.");
+                walletHandle.setEncryptedPassword(null);
+                walletHandle.setIv(null);
+            } else {
+                 Log.d(TAG, "User opted to save password, saving encryptedPassword and iv.");
+            }
             walletHandleDao.insertAll(walletHandle);
             Log.d(TAG, "Inserted new wallet into DB: " + walletHandle.getName()); // Log DB insert
         });

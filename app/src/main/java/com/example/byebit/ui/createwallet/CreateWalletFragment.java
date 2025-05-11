@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast; // Import Toast
+import android.widget.CheckBox; // Import CheckBox
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -22,6 +23,8 @@ public class CreateWalletFragment extends Fragment {
     private FragmentCreateWalletBinding binding;
     private CreateWalletViewModel createWalletViewModel;
     private BiometricService biometricService;
+    // ADD THIS FIELD
+    private CheckBox savePasswordCheckBox;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -31,6 +34,9 @@ public class CreateWalletFragment extends Fragment {
 
         binding = FragmentCreateWalletBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+
+        // ADD THIS LINE TO GET REFERENCE TO THE CHECKBOX
+        savePasswordCheckBox = binding.checkboxSavePassword;
 
         // Set click listener for the create button
         binding.buttonCreateWallet.setOnClickListener(v -> attemptCreateWallet());
@@ -67,6 +73,9 @@ public class CreateWalletFragment extends Fragment {
         String name = binding.editTextWalletName.getText().toString().trim();
         String password = binding.editTextPassword.getText().toString();
         String confirmPassword = binding.editTextConfirmPassword.getText().toString();
+        // ADD THIS LINE TO GET THE CHECKBOX STATE
+        boolean savePassword = savePasswordCheckBox.isChecked();
+
 
         // Clear previous errors
         binding.textInputLayoutWalletName.setError(null);
@@ -100,17 +109,25 @@ public class CreateWalletFragment extends Fragment {
             biometricService.encrypt(name, password, new AuthenticationListener() {
                 @Override
                 public void onSuccess(byte[] result, byte[] iv) {
-                    createWalletViewModel.createWallet(name, password, result, iv);
+                    // MODIFY THIS LINE TO PASS THE savePassword BOOLEAN
+                    createWalletViewModel.createWallet(name, password, result, iv, savePassword);
                 }
 
                 @Override
                 public void onFailure(AuthenticationFailureReason reason) {
-                    // :((
+                    // TODO: Handle authentication failure appropriately
+                    // For now, just log or show a generic error
+                    Toast.makeText(getContext(), "Biometric authentication failed: " + reason, Toast.LENGTH_SHORT).show();
+                    // Consider if wallet creation should proceed without biometric auth or be cancelled
+                    // For this task, we assume biometric auth is required if attempted.
+                    // If it fails, the operation stops here.
                 }
 
                 @Override
                 public void onCancel() {
-
+                    // TODO: Handle authentication cancellation
+                    Toast.makeText(getContext(), "Biometric authentication cancelled", Toast.LENGTH_SHORT).show();
+                    // Operation is cancelled
                 }
             });
         }

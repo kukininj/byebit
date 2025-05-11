@@ -73,13 +73,25 @@
             android:inputType="textPassword"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- ADD THIS CHECKBOX -->
+    <CheckBox
+        android:id="@+id/checkbox_save_password"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/checkbox_save_password"
+        android:checked="true"
+        app:layout_constraintTop_toBottomOf="@id/text_input_layout_confirm_password"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <Button
         android:id="@+id/button_create_wallet"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:text="@string/button_create_wallet"
-        app:layout_constraintTop_toBottomOf="@id/text_input_layout_confirm_password"
+        app:layout_constraintTop_toBottomOf="@id/checkbox_save_password"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
