@@ -8,8 +8,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 // Menu, MenuInflater, MenuItem are kept as they are used by MenuProvider methods
@@ -50,17 +48,10 @@ import com.example.byebit.domain.WalletHandle;
 import com.example.byebit.security.AuthenticationFailureReason;
 import com.example.byebit.security.AuthenticationListener;
 import com.example.byebit.security.BiometricService;
+import com.example.byebit.util.WalletExporter;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 
 
@@ -76,8 +67,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     private static final String DEFAULT_EXPORT_FILE_NAME = "byebit_wallets_export.zip";
     private ActivityResultLauncher<Intent> exportWalletsLauncher;
     private List<WalletHandle> walletsToExportHolder; // To hold wallets between SAF launch and result
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor(); // For background zipping
-    private final Handler mainThreadHandler = new Handler(Looper.getMainLooper()); // To post results to UI thread
+    private WalletExporter walletExporter;
 
     private WalletHandle currentWalletForDetails;
 
@@ -87,14 +77,28 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
         biometricService = new BiometricService(this);
 
+        walletExporter = new WalletExporter(requireContext().getApplicationContext());
+
         exportWalletsLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         Uri uri = result.getData().getData();
                         if (uri != null && walletsToExportHolder != null && !walletsToExportHolder.isEmpty()) {
-                            // Perform zipping in background
-                            zipWalletsToUri(uri, walletsToExportHolder);
+                            // MODIFIED: Call WalletExporter
+                            Toast.makeText(getContext(), "Exporting wallets...", Toast.LENGTH_SHORT).show();
+                            walletExporter.exportWalletsToZip(uri, walletsToExportHolder, new WalletExporter.ExportListener() {
+                                @Override
+                                public void onExportSuccess() {
+                                    Toast.makeText(getContext(), "Wallets exported successfully!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onExportFailure(String errorMessage) {
+                                    Toast.makeText(getContext(), "Export failed: " + errorMessage, Toast.LENGTH_LONG).show();
+                                    Log.w(TAG, "Export failed via WalletExporter: " + errorMessage);
+                                }
+                            });
                         } else {
                             Toast.makeText(getContext(), "Export cancelled or no wallets selected.", Toast.LENGTH_SHORT).show();
                             Log.d(TAG, "Export URI was null or walletsToExportHolder was empty/null.");
@@ -128,7 +132,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
         binding.fabExportWallets.setOnClickListener(v -> {
             // Ensure ViewModel is available and LiveData has a value
-            if (dashboardViewModel != null && dashboardViewModel.getSavedWallets().getValue() != null) {
+            if (dashboardViewModel.getSavedWallets().getValue() != null) {
                 List<WalletHandle> currentWallets = dashboardViewModel.getSavedWallets().getValue();
                 if (currentWallets != null && !currentWallets.isEmpty()) {
                     this.walletsToExportHolder = currentWallets; // Store for the launcher callback
@@ -343,94 +347,6 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         }
     }
 
-    private void zipWalletsToUri(Uri destinationUri, List<WalletHandle> wallets) {
-        if (getContext() == null) {
-            Log.e(TAG, "Context is null at the beginning of zipWalletsToUri. Aborting.");
-            // Attempt to use activity's application context for critical error Toast if fragment context is gone
-            Activity activity = getActivity();
-            if (activity != null && activity.getApplicationContext() != null) {
-                Toast.makeText(activity.getApplicationContext(), "Export failed: Internal error (context lost)", Toast.LENGTH_LONG).show();
-            }
-            return;
-        }
-        Toast.makeText(getContext(), "Exporting wallets...", Toast.LENGTH_SHORT).show();
-
-        executorService.execute(() -> {
-            boolean success = false;
-            String errorMessage = null;
-            File walletsDir = null;
-
-            try {
-                Context currentContext = getContext();
-                if (currentContext == null) {
-                    throw new IOException("Context became null during background execution.");
-                }
-                walletsDir = currentContext.getFilesDir();
-                if (walletsDir == null) {
-                    throw new IOException("Failed to get application files directory (walletsDir is null).");
-                }
-                if (!walletsDir.exists() || !walletsDir.isDirectory()) {
-                    throw new IOException("Wallets directory not found or is not a directory at: " + walletsDir.getAbsolutePath());
-                }
-
-                try (OutputStream fos = currentContext.getContentResolver().openOutputStream(destinationUri);
-                     ZipOutputStream zos = new ZipOutputStream(fos)) {
-
-                    if (fos == null) {
-                        throw new IOException("Failed to open output stream for URI: " + destinationUri);
-                    }
-
-                    byte[] buffer = new byte[4096]; // Increased buffer size
-                    for (WalletHandle wallet : wallets) {
-                        File walletFile = new File(walletsDir, wallet.getFilename());
-                        if (walletFile.exists() && walletFile.isFile()) {
-                            Log.d(TAG, "Adding to zip: " + walletFile.getAbsolutePath() + " (Size: " + walletFile.length() + " bytes)");
-                            ZipEntry zipEntry = new ZipEntry(wallet.getFilename());
-                            zos.putNextEntry(zipEntry);
-                            try (FileInputStream fis = new FileInputStream(walletFile)) {
-                                int length;
-                                while ((length = fis.read(buffer)) > 0) {
-                                    zos.write(buffer, 0, length);
-                                }
-                            }
-                            zos.closeEntry();
-                            Log.d(TAG, "Successfully added " + wallet.getFilename() + " to zip.");
-                        } else {
-                            Log.w(TAG, "Wallet file not found or is not a file, skipping: " + walletFile.getAbsolutePath());
-                        }
-                    }
-                    zos.finish(); // Ensure all data is written
-                    success = true;
-                    Log.d(TAG, "Zipping process completed successfully.");
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Error zipping wallets to " + destinationUri, e);
-                errorMessage = e.getMessage();
-                if (walletsDir != null) { // Log walletsDir path if it was initialized
-                    Log.e(TAG, "Wallets directory was: " + walletsDir.getAbsolutePath());
-                }
-            } catch (NullPointerException e) {
-                Log.e(TAG, "NullPointerException during zipping", e);
-                errorMessage = "A null pointer occurred during export.";
-            }
-
-
-            final boolean finalSuccess = success;
-            final String finalErrorMessage = errorMessage;
-            mainThreadHandler.post(() -> {
-                if (getContext() != null) {
-                    if (finalSuccess) {
-                        Toast.makeText(getContext(), "Wallets exported successfully!", Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(getContext(), "Export failed: " + (finalErrorMessage != null ? finalErrorMessage : "Unknown error"), Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Log.w(TAG, "Context was null when trying to post zipping result.");
-                }
-            });
-        });
-    }
-
     @Override
     public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
         menuInflater.inflate(R.menu.dashboard_menu, menu);
@@ -453,9 +369,9 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (executorService != null && !executorService.isShutdown()) {
-            Log.d(TAG, "Shutting down executor service.");
-            executorService.shutdown();
+        // MODIFIED: Shutdown WalletExporter's executor
+        if (walletExporter != null) {
+            walletExporter.shutdown();
         }
     }
 
