@@ -53,5 +53,6 @@
 
     <string name="biometric_unlock_fail_fallback">Biometric unlock failed, using fallback input</string>
     <string name="wallet_unlock_cancelled">Wallet unlock cancelled</string>
+    <string name="wallet_details_title_format">Details: %s</string>
 
 </resources>

@@ -51,7 +51,7 @@ public class BiometricService {
     public void decrypt(WalletHandle wallet, AuthenticationListener listener) {
         if (wallet.getEncryptedPassword() == null) {
             listener.onFailure(AuthenticationFailureReason.PASSWORD_NOT_STORED);
-            return; // Add this return
+            return;
         }
 
         BiometricPrompt.AuthenticationCallback callback = new BiometricPrompt.AuthenticationCallback() {
@@ -65,16 +65,13 @@ public class BiometricService {
                         byte[] bytes = cipher.doFinal(wallet.getEncryptedPassword());
                         listener.onSuccess(bytes, cipher.getIV());
                     } catch (BadPaddingException | IllegalBlockSizeException e) {
-                        // MODIFIED: Handle decryption specific errors
                         Log.e(TAG, "Decryption failed: " + e.getMessage(), e);
                         listener.onFailure(AuthenticationFailureReason.DECRYPTION_FAILED);
                     } catch (Exception e) {
-                        // MODIFIED: Handle other errors during decryption operation
                         Log.e(TAG, "Error during decryption operation: " + e.getMessage(), e);
                         listener.onFailure(AuthenticationFailureReason.INTERNAL_ERROR);
                     }
                 } else {
-                    // ADDED: Handle case where crypto object or cipher is null after successful auth
                     Log.e(TAG, "Authentication succeeded but crypto object or cipher is null.");
                     listener.onFailure(AuthenticationFailureReason.INTERNAL_ERROR);
                 }
@@ -110,17 +107,15 @@ public class BiometricService {
 
             SecretKey key = (SecretKey) keyStore.getKey(wallet.getName(), null);
             if (key == null) {
-                // ADDED: Handle case where key is not found in keystore
                 Log.e(TAG, "Key not found in Keystore for alias: " + wallet.getName());
-                listener.onFailure(AuthenticationFailureReason.KEYSTORE_ERROR); // Or a more specific reason like KEY_NOT_FOUND
+                listener.onFailure(AuthenticationFailureReason.KEYSTORE_ERROR);
                 return;
             }
 
             byte[] iv = wallet.getIv();
             if (iv == null) {
-                // ADDED: Handle case where IV is null
                 Log.e(TAG, "IV is null for wallet: " + wallet.getName());
-                listener.onFailure(AuthenticationFailureReason.CRYPTO_SETUP_FAILED); // IV is crucial for GCM
+                listener.onFailure(AuthenticationFailureReason.CRYPTO_SETUP_FAILED);
                 return;
             }
             GCMParameterSpec spec = new GCMParameterSpec(128, iv);
@@ -142,7 +137,6 @@ public class BiometricService {
                  InvalidKeyException | InvalidAlgorithmParameterException | NoSuchPaddingException |
                  UnrecoverableKeyException e) {
             Log.e(TAG, "Error setting up decryption: " + e.getMessage(), e);
-            // MODIFIED: Call listener on failure
             listener.onFailure(AuthenticationFailureReason.CRYPTO_SETUP_FAILED);
         }
     }
@@ -153,22 +147,19 @@ public class BiometricService {
             public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
                 Log.d(TAG, "Authentication succeeded!");
-                if (result.getCryptoObject() != null && result.getCryptoObject().getCipher() != null) { // MODIFIED: check cipher as well
+                if (result.getCryptoObject() != null && result.getCryptoObject().getCipher() != null) {
                     Cipher cipher = result.getCryptoObject().getCipher();
                     try {
                         byte[] ciphertext = cipher.doFinal(password.getBytes(StandardCharsets.UTF_8));
                         listener.onSuccess(ciphertext, cipher.getIV());
                     } catch (BadPaddingException | IllegalBlockSizeException e) {
-                        // MODIFIED: Handle encryption specific errors
                         Log.e(TAG, "Encryption failed: " + e.getMessage(), e);
                         listener.onFailure(AuthenticationFailureReason.ENCRYPTION_FAILED);
                     } catch (Exception e) {
-                        // MODIFIED: Handle other errors during encryption operation
                         Log.e(TAG, "Error during encryption operation: " + e.getMessage(), e);
                         listener.onFailure(AuthenticationFailureReason.INTERNAL_ERROR);
                     }
                 } else {
-                    // ADDED: Handle case where crypto object or cipher is null after successful auth
                     Log.e(TAG, "Authentication succeeded but crypto object or cipher is null.");
                     listener.onFailure(AuthenticationFailureReason.INTERNAL_ERROR);
                 }
@@ -205,8 +196,6 @@ public class BiometricService {
 
             SecretKey key = getOrGenerateKey(name);
             if (key == null) {
-                 // ADDED: Handle case where key generation/retrieval failed silently in getOrGenerateKey (though it throws)
-                 // This path should ideally not be hit if getOrGenerateKey throws as expected.
                 Log.e(TAG, "Failed to get or generate key for alias: " + name);
                 listener.onFailure(AuthenticationFailureReason.KEYSTORE_ERROR);
                 return;
@@ -225,12 +214,10 @@ public class BiometricService {
 
         } catch (KeyStoreException | CertificateException | IOException | NoSuchAlgorithmException |
                  InvalidKeyException | InvalidAlgorithmParameterException | NoSuchPaddingException |
-                 UnrecoverableKeyException e) { // This catch block might be redundant if GeneralSecurityException below catches most of these from getOrGenerateKey
+                 UnrecoverableKeyException e) {
             Log.e(TAG, "Error setting up encryption: " + e.getMessage(), e);
-            // MODIFIED: Call listener on failure
             listener.onFailure(AuthenticationFailureReason.CRYPTO_SETUP_FAILED);
-        } catch (GeneralSecurityException e) { // Catches exceptions from getOrGenerateKey and Cipher.init
-            // MODIFIED: Call listener on failure and remove RuntimeException
+        } catch (GeneralSecurityException e) {
             Log.e(TAG, "Security error during encryption setup: " + e.getMessage(), e);
             listener.onFailure(AuthenticationFailureReason.CRYPTO_SETUP_FAILED);
         }
@@ -248,7 +235,7 @@ public class BiometricService {
                     .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setKeySize(256)
-                    .setUserAuthenticationRequired(true) // Require user authentication
+                    .setUserAuthenticationRequired(true)
                     .setInvalidatedByBiometricEnrollment(true)
                     .setUserAuthenticationParameters(15 * 60, // 15 minutes timeout
                             KeyProperties.AUTH_DEVICE_CREDENTIAL);

@@ -41,7 +41,8 @@ import androidx.appcompat.app.AlertDialog;
 // Assuming PasswordInputDialogFragment is in this package, user to verify
 import com.example.byebit.ui.dialog.PasswordInputDialogFragment;
 
-import com.example.byebit.ui.dialog.PasswordDialogResult; // ADD THIS IMPORT
+import com.example.byebit.ui.dialog.WalletDetailDialogResult;
+import com.example.byebit.ui.dialog.WalletDetailsDialogFragment;
 
 
 import com.example.byebit.databinding.FragmentDashboardBinding;
@@ -54,12 +55,11 @@ import com.example.byebit.util.WalletExporter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import io.reactivex.Scheduler;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
 
-public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener, WalletAdapter.OnDetailsClickListener, MenuProvider {
+public class DashboardFragment extends Fragment implements WalletAdapter.OnDetailsClickListener, MenuProvider {
 
     private FragmentDashboardBinding binding;
     private DashboardViewModel dashboardViewModel;
@@ -184,13 +184,79 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
                 this.currentWalletForDetails = null;
             } else if (result.isSuccess() && result.getCredentials() != null) {
                 if (this.currentWalletForDetails != null) {
-                    showWalletDetailsDialog(this.currentWalletForDetails, result.getCredentials());
+                    // MODIFIED: Show the new WalletDetailsDialogFragment
+                    Credentials credentials = result.getCredentials();
+                    String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
+
+                    WalletDetailsDialogFragment dialogFragment = WalletDetailsDialogFragment.newInstance(
+                            this.currentWalletForDetails.getName(),
+                            this.currentWalletForDetails.getAddress(),
+                            privateKey
+                    );
+                    dialogFragment.show(getChildFragmentManager(), WalletDetailsDialogFragment.TAG);
+
+                    // Subscribe to dialog events
+                    disposables.add(dialogFragment.getDialogEvents()
+                        .observeOn(Schedulers.from(requireContext().getMainExecutor())) // Ensure UI updates on main thread
+                        .subscribe(
+                            walletDetailDialogResult -> {
+                                final WalletHandle walletInContext = this.currentWalletForDetails; // Capture for use in lambdas
+
+                                if (walletDetailDialogResult.action == WalletDetailDialogResult.Action.REQUEST_DELETE_CONFIRMATION) {
+                                    deleteWalletWithConfirmation(walletInContext);
+                                } else if (walletDetailDialogResult.action == WalletDetailDialogResult.Action.CLOSE ||
+                                           walletDetailDialogResult.action == WalletDetailDialogResult.Action.DISMISS) {
+                                    if (walletInContext != null) {
+                                        Log.d(TAG, "WalletDetailsDialogFragment closed/dismissed via Rx, clearing currentWalletForDetails for: " + walletInContext.getName());
+                                    }
+                                    this.currentWalletForDetails = null; // Clear wallet context
+                                }
+                            },
+                            throwable -> {
+                                Log.e(TAG, "Error in WalletDetailsDialogFragment Rx stream", throwable);
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(), "Error processing wallet details action.", Toast.LENGTH_SHORT).show();
+                                }
+                                this.currentWalletForDetails = null; // Clear wallet context on error
+                            },
+                            () -> {
+                                Log.d(TAG, "WalletDetailsDialogFragment Rx stream completed.");
+                            }
+                        ));
                 } else {
                     Log.e(TAG, "currentWalletForDetails is null when credentials result received successfully.");
                 }
-                dashboardViewModel.clearCredentialsResult();
+                dashboardViewModel.clearCredentialsResult(); // Keep this to reset the LiveData state
             }
         });
+
+        // The FragmentResultListener for WalletDetailsDialogFragment has been removed.
+    }
+
+    private void deleteWalletWithConfirmation(WalletHandle walletInContext) {
+        if (walletInContext != null) {
+            new AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.confirm_delete_wallet_title))
+                .setMessage(getString(R.string.confirm_delete_wallet_message, walletInContext.getName()))
+                .setPositiveButton(getString(R.string.delete_button_confirm), (confirmDialog, confirmWhich) -> {
+                    dashboardViewModel.deleteWallet(walletInContext);
+                    Toast.makeText(getContext(), getString(R.string.wallet_deleted_toast_param, walletInContext.getName()), Toast.LENGTH_SHORT).show();
+                    this.currentWalletForDetails = null; // Clear after deletion
+                })
+                .setNegativeButton(R.string.cancel_button, (dialogInterface, i) -> {
+                    this.currentWalletForDetails = null; // Clear if deletion cancelled
+                })
+                .setOnDismissListener(dialogInterface -> {
+                    if (this.currentWalletForDetails == walletInContext) { // Check if still the same wallet
+                        this.currentWalletForDetails = null;
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+        } else {
+            Log.w(TAG, "Request delete confirmation received, but currentWalletForDetails was null.");
+            this.currentWalletForDetails = null; // Ensure it's cleared
+        }
     }
 
     private void setupRecyclerView() {
@@ -218,7 +284,6 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
             dashboardViewModel.fetchBalanceForAddress(walletAddress);
         });
 
-        walletAdapter.setOnItemLongClickListener(this);
         walletAdapter.setOnDetailsClickListener(this);
     }
 
@@ -254,25 +319,16 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
                             .subscribe(
                                     passwordDialogResult -> {
                                         if (passwordDialogResult.isSuccess() && passwordDialogResult.password != null) {
-                                            if (DashboardFragment.this.currentWalletForDetails != null) { // Check if context is still valid
-                                                dashboardViewModel.loadCredentialsForWallet(DashboardFragment.this.currentWalletForDetails, passwordDialogResult.password);
-                                                // currentWalletForDetails will be cleared by the credential loading flow (success/failure/dismiss)
-                                            } else {
-                                                Log.w(TAG, "Password received from dialog, but currentWalletForDetails was null unexpectedly.");
-                                            }
+                                            dashboardViewModel.loadCredentialsForWallet(DashboardFragment.this.currentWalletForDetails, passwordDialogResult.password);
                                         } else { // Cancelled or other non-success
                                             Log.d(TAG, "Password input cancelled or failed for wallet: " + (DashboardFragment.this.currentWalletForDetails != null ? DashboardFragment.this.currentWalletForDetails.getName() : "N/A"));
-                                            if (getContext() != null) {
-                                                Toast.makeText(getContext(), R.string.password_entry_cancelled, Toast.LENGTH_SHORT).show();
-                                            }
+                                            Toast.makeText(getContext(), R.string.password_entry_cancelled, Toast.LENGTH_SHORT).show();
                                             DashboardFragment.this.currentWalletForDetails = null; // Clear wallet context
                                         }
                                     },
                                     throwable -> {
                                         Log.e(TAG, "Error in password dialog stream for wallet: " + (DashboardFragment.this.currentWalletForDetails != null ? DashboardFragment.this.currentWalletForDetails.getName() : "N/A"), throwable);
-                                        if (getContext() != null) {
-                                            Toast.makeText(getContext(), "Error obtaining password.", Toast.LENGTH_SHORT).show();
-                                        }
+                                        Toast.makeText(getContext(), "Error obtaining password.", Toast.LENGTH_SHORT).show();
                                         DashboardFragment.this.currentWalletForDetails = null; // Clear wallet context on error
                                     }
                                     // onComplete: Handled by onNext logic as PasswordInputDialogFragment emits success/cancel before completing.
@@ -294,55 +350,8 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
 
     // showFallbackPasswordInput method is removed.
 
-    private void showWalletDetailsDialog(WalletHandle wallet, Credentials credentials) {
-        if (getContext() == null) return;
-
-        String privateKey = credentials.getEcKeyPair().getPrivateKey().toString(16);
-
-        AlertDialog.Builder detailsDialogBuilder = new AlertDialog.Builder(requireContext());
-        detailsDialogBuilder.setTitle(getString(R.string.wallet_details_title, wallet.getName()));
-
-        String message = getString(R.string.wallet_address_label) + "\n" + wallet.getAddress() +
-                         "\n\n" + getString(R.string.private_key_label) + "\n" + privateKey;
-        detailsDialogBuilder.setMessage(message);
-
-        detailsDialogBuilder.setPositiveButton(R.string.delete_wallet_button_details, (dialog, which) -> {
-            new AlertDialog.Builder(requireContext())
-                .setTitle(getString(R.string.confirm_delete_wallet_title))
-                .setMessage(getString(R.string.confirm_delete_wallet_message, wallet.getName()))
-                .setPositiveButton(getString(R.string.delete_button_confirm), (confirmDialog, confirmWhich) -> {
-                    dashboardViewModel.deleteWallet(wallet);
-                    Toast.makeText(getContext(), getString(R.string.wallet_deleted_toast_param, wallet.getName()), Toast.LENGTH_SHORT).show();
-                    dialog.dismiss();
-                })
-                .setNegativeButton(R.string.cancel_button, null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
-        });
-
-        detailsDialogBuilder.setNeutralButton(R.string.copy_private_key_button, (dialog, which) -> {
-            ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("Private Key", privateKey);
-            if (clipboard != null) {
-                clipboard.setPrimaryClip(clip);
-                Toast.makeText(getContext(), R.string.private_key_copied_toast, Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getContext(), R.string.failed_to_copy_private_key_toast, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-        detailsDialogBuilder.setNegativeButton(R.string.close_button, (dialog, which) -> {
-            dialog.dismiss();
-        });
-
-        detailsDialogBuilder.setOnDismissListener(dialogInterface -> {
-            this.currentWalletForDetails = null;
-        });
-
-        detailsDialogBuilder.setCancelable(false);
-        detailsDialogBuilder.show();
-    }
+    // The showWalletDetailsDialog method has been removed and its functionality
+    // is now in WalletDetailsDialogFragment and the FragmentResultListener.
 
     private void launchSaveZipFilePicker() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);

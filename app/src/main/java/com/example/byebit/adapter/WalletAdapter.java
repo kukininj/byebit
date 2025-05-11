@@ -29,13 +29,6 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
     // Add this field inside the WalletAdapter class
     private OnItemClickListener listener;
 
-    // ADD: Interface for long click listener
-    public interface OnItemLongClickListener {
-    }
-
-    // ADD: Field for long click listener
-    private OnItemLongClickListener longClickListener;
-
     // Add this interface definition inside the WalletAdapter class
     public interface OnDetailsClickListener {
         void onDetailsClick(WalletHandle wallet);
@@ -106,11 +99,6 @@ public class WalletAdapter extends RecyclerView.Adapter<WalletAdapter.WalletView
     // Add this method inside the WalletAdapter class
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
-    }
-
-    // ADD: Setter for the long click listener
-    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
-        this.longClickListener = listener;
     }
 
     // Add this setter method inside the WalletAdapter class
