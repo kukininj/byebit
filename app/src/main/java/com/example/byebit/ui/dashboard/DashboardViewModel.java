@@ -1,7 +1,7 @@
 package com.example.byebit.ui.dashboard;
 
 import android.app.Application;
-import android.util.Log; // ADD THIS
+import android.util.Log;
 
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -17,7 +17,7 @@ import java.util.List;
 
 public class DashboardViewModel extends AndroidViewModel {
 
-    private static final String TAG = "DashboardViewModel"; // Add a TAG for logging
+    private static final String TAG = "DashboardViewModel";
 
     private final WalletRepository walletRepository;
     private final LiveData<List<WalletHandle>> savedWallets;
@@ -35,21 +35,16 @@ public class DashboardViewModel extends AndroidViewModel {
         savedWallets = walletRepository.getSavedWallets();
     }
 
-    // Getter for the wallet list LiveData
     public LiveData<List<WalletHandle>> getSavedWallets() {
         return savedWallets;
     }
 
-    // Add a method to get the balance for a specific wallet address
     public void fetchBalanceForAddress(String address) {
         walletRepository.getWalletBalance(address);
     }
 
-    // ADD: Method to delete a wallet
     public void deleteWallet(WalletHandle wallet) {
         walletRepository.deleteWallet(wallet);
-        // Optionally, you could add LiveData here to observe deletion status/errors
-        // For now, the list will update automatically via getSavedWallets() LiveData
     }
 
     // ADD THIS METHOD to refresh all wallet balances

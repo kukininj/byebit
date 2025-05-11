@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 import android.view.View;
-// Menu, MenuInflater, MenuItem are kept as they are used by MenuProvider methods
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -18,7 +17,6 @@ import android.view.ViewGroup;
 import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
-// EditText and InputType removed as showFallbackPasswordInput is removed
 import org.web3j.crypto.Credentials;
 import android.widget.Toast;
 
@@ -27,19 +25,17 @@ import androidx.activity.result.contract.ActivityResultContracts;
 
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable; // Import Nullable
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager; // Import LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView; // Import RecyclerView
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation; // Import Navigation helper
+import androidx.navigation.Navigation;
 
 import com.example.byebit.R;
 import com.example.byebit.adapter.WalletAdapter;
 import androidx.appcompat.app.AlertDialog;
-// Assuming PasswordInputDialogFragment is in this package, user to verify
-import com.example.byebit.ui.dialog.PasswordInputDialogFragment;
 import com.example.byebit.ui.dialog.WalletUnlockDialogFragment;
 
 import com.example.byebit.ui.dialog.WalletDetailDialogResult;
@@ -48,12 +44,9 @@ import com.example.byebit.ui.dialog.WalletDetailsDialogFragment;
 
 import com.example.byebit.databinding.FragmentDashboardBinding;
 import com.example.byebit.domain.WalletHandle;
-import com.example.byebit.security.AuthenticationFailureReason;
-import com.example.byebit.security.AuthenticationListener;
 import com.example.byebit.security.BiometricService;
 import com.example.byebit.util.WalletExporter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
@@ -70,11 +63,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
     private static final String TAG = "DashboardFragment";
     private static final String DEFAULT_EXPORT_FILE_NAME = "byebit_wallets_export.zip";
     private ActivityResultLauncher<Intent> exportWalletsLauncher;
-    private List<WalletHandle> walletsToExportHolder; // To hold wallets between SAF launch and result
+    private List<WalletHandle> walletsToExportHolder;
     private WalletExporter walletExporter;
 
     private WalletHandle currentWalletForDetails;
-    // For managing RxJava subscriptions
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     @Override
@@ -137,11 +129,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
         });
 
         binding.fabExportWallets.setOnClickListener(v -> {
-            // Ensure ViewModel is available and LiveData has a value
             if (dashboardViewModel.getSavedWallets().getValue() != null) {
                 List<WalletHandle> currentWallets = dashboardViewModel.getSavedWallets().getValue();
                 if (currentWallets != null && !currentWallets.isEmpty()) {
-                    this.walletsToExportHolder = currentWallets; // Store for the launcher callback
+                    this.walletsToExportHolder = currentWallets;
                     launchSaveZipFilePicker();
                 } else {
                     Toast.makeText(getContext(), "No wallets to export.", Toast.LENGTH_SHORT).show();
@@ -163,7 +154,6 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
         menuHost.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         dashboardViewModel.getSavedWallets().observe(getViewLifecycleOwner(), wallets -> {
-            // Update the adapter's data when the wallet list changes
             if (wallets != null) {
                 walletAdapter.setWallets(wallets);
             }
@@ -198,7 +188,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
 
                     // Subscribe to dialog events
                     disposables.add(dialogFragment.getDialogEvents()
-                        .observeOn(Schedulers.from(requireContext().getMainExecutor())) // Ensure UI updates on main thread
+                        .observeOn(Schedulers.from(requireContext().getMainExecutor()))
                         .subscribe(
                             walletDetailDialogResult -> {
                                 final WalletHandle walletInContext = this.currentWalletForDetails; // Capture for use in lambdas
@@ -230,8 +220,6 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                 dashboardViewModel.clearCredentialsResult(); // Keep this to reset the LiveData state
             }
         });
-
-        // The FragmentResultListener for WalletDetailsDialogFragment has been removed.
     }
 
     private void deleteWalletWithConfirmation(WalletHandle walletInContext) {
@@ -242,13 +230,13 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                 .setPositiveButton(getString(R.string.delete_button_confirm), (confirmDialog, confirmWhich) -> {
                     dashboardViewModel.deleteWallet(walletInContext);
                     Toast.makeText(getContext(), getString(R.string.wallet_deleted_toast_param, walletInContext.getName()), Toast.LENGTH_SHORT).show();
-                    this.currentWalletForDetails = null; // Clear after deletion
+                    this.currentWalletForDetails = null;
                 })
                 .setNegativeButton(R.string.cancel_button, (dialogInterface, i) -> {
-                    this.currentWalletForDetails = null; // Clear if deletion cancelled
+                    this.currentWalletForDetails = null;
                 })
                 .setOnDismissListener(dialogInterface -> {
-                    if (this.currentWalletForDetails == walletInContext) { // Check if still the same wallet
+                    if (this.currentWalletForDetails == walletInContext) {
                         this.currentWalletForDetails = null;
                     }
                 })
@@ -256,7 +244,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                 .show();
         } else {
             Log.w(TAG, "Request delete confirmation received, but currentWalletForDetails was null.");
-            this.currentWalletForDetails = null; // Ensure it's cleared
+            this.currentWalletForDetails = null;
         }
     }
 
@@ -306,24 +294,11 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                 .observeOn(Schedulers.from(requireContext().getMainExecutor())) // Ensure UI updates on main thread
                 .subscribe(
                         passwordResult -> {
-                            // Check if currentWalletForDetails is still valid for this operation.
-                            // It might have been cleared by another process or if the fragment is rapidly changing state.
-                            if (this.currentWalletForDetails == null || !this.currentWalletForDetails.getId().equals(wallet.getId())) {
-                                Log.w(TAG, "Wallet context changed or became null during unlock dialog operation for originally intended wallet: " + wallet.getName());
-                                // If currentWalletForDetails is null, or not the one we started with, abort this specific callback.
-                                // The new operation (if any) will have its own dialog and subscription.
-                                return;
-                            }
-
                             if (passwordResult.isSuccess() && passwordResult.password != null) {
                                 dashboardViewModel.loadCredentialsForWallet(this.currentWalletForDetails, passwordResult.password);
-                                // currentWalletForDetails will be handled by the subsequent flow (e.g., WalletDetailsDialogFragment)
-                                // or if loadCredentialsForWallet itself clears it on error.
                             } else { // Cancelled or other non-success from WalletUnlockDialogFragment
                                 Log.d(TAG, "Wallet unlock cancelled or failed for: " + this.currentWalletForDetails.getName());
-                                if (getContext() != null) { // Check context before Toast
-                                    Toast.makeText(getContext(), getString(R.string.wallet_unlock_cancelled_or_failed), Toast.LENGTH_SHORT).show();
-                                }
+                                Toast.makeText(getContext(), getString(R.string.wallet_unlock_cancelled_or_failed), Toast.LENGTH_SHORT).show();
                                 this.currentWalletForDetails = null; // Clear wallet context as unlock failed/cancelled
                             }
                         },
@@ -340,17 +315,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                                 this.currentWalletForDetails = null;
                             }
                         }
-                        // onComplete: WalletUnlockDialogFragment's subject completes when it's dismissed.
-                        // Clearing of currentWalletForDetails is handled in onNext/onError.
                 ));
 
         walletUnlockDialog.show(getChildFragmentManager(), "WalletUnlockDialogTag");
     }
-
-    // showFallbackPasswordInput method is removed.
-
-    // The showWalletDetailsDialog method has been removed and its functionality
-    // is now in WalletDetailsDialogFragment and the FragmentResultListener.
 
     private void launchSaveZipFilePicker() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);

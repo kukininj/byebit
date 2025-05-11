@@ -1,7 +1,7 @@
 package com.example.byebit.ui.createwallet;
 
 import android.app.Application;
-import android.util.Log; // Import Log
+import android.util.Log;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -20,19 +20,17 @@ import java.util.concurrent.Executors;
 
 public class CreateWalletViewModel extends AndroidViewModel {
 
-    private static final String TAG = "CreateWalletViewModel"; // Add TAG for logging
+    private static final String TAG = "CreateWalletViewModel";
 
     private final WalletRepository walletRepository;
-    private final ExecutorService executorService; // Executor for background tasks
+    private final ExecutorService executorService;
 
-    // LiveData to communicate the result of the creation operation
     private final MutableLiveData<CreationResult> _creationResult = new MutableLiveData<>();
     public LiveData<CreationResult> getCreationResult() {
         return _creationResult;
     }
 
-    // LiveData to indicate loading state
-    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false); // Initialize with false
+    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
@@ -41,32 +39,24 @@ public class CreateWalletViewModel extends AndroidViewModel {
     public CreateWalletViewModel(Application application) {
         super(application);
         walletRepository = new WalletRepository(application);
-        // Use a fixed thread pool for background operations (WalletUtils calls)
-        executorService = Executors.newFixedThreadPool(2); // Adjust pool size as needed
+        executorService = Executors.newFixedThreadPool(1);
     }
 
-    // MODIFY THIS METHOD SIGNATURE TO ACCEPT savePassword BOOLEAN
     public void createWallet(String name, String password, byte[] encryptedPassword, byte[] iv, boolean savePassword) {
-        _isLoading.setValue(true); // Indicate loading started
-        _creationResult.setValue(CreationResult.loading()); // Set loading state
+        _isLoading.setValue(true);
+        _creationResult.setValue(CreationResult.loading());
 
         executorService.execute(() -> {
             try {
-                // Call the repository method on a background thread
-                // The repository itself handles the DB insert on its own executor
-                // MODIFY THIS LINE TO PASS THE savePassword BOOLEAN
                 WalletHandle newWallet = walletRepository.createNewWallet(name, password, encryptedPassword, iv, savePassword);
-                // Post success result back to the main thread
                 _creationResult.postValue(CreationResult.success(newWallet));
-                Log.d(TAG, "Wallet creation task completed successfully."); // Add log
+                Log.d(TAG, "Wallet creation task completed successfully.");
             } catch (InvalidAlgorithmParameterException | CipherException | NoSuchAlgorithmException | IOException | NoSuchProviderException e) {
-                // Post error result back to the main thread
-                Log.e(TAG, "Error creating wallet", e); // Log the error
+                Log.e(TAG, "Error creating wallet", e);
                 _creationResult.postValue(CreationResult.error(e.getMessage()));
             } finally {
-                // Post loading finished back to the main thread
                 _isLoading.postValue(false);
-                Log.d(TAG, "Wallet creation task finished."); // Add log
+                Log.d(TAG, "Wallet creation task finished.");
             }
         });
     }
@@ -74,14 +64,11 @@ public class CreateWalletViewModel extends AndroidViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-        // Shut down the executor service when the ViewModel is no longer used
         executorService.shutdown();
-        Log.d(TAG, "ViewModel executor shut down."); // Add log
-        // Also shut down the repository's executor if it's managed here
+        Log.d(TAG, "ViewModel executor shut down.");
         walletRepository.shutdown();
     }
 
-    // Helper class to wrap creation results (Success, Error, Loading)
     public static class CreationResult {
         private final WalletHandle success;
         private final String error;
