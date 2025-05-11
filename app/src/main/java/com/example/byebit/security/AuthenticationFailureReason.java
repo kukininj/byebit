@@ -14,9 +14,6 @@ public enum AuthenticationFailureReason {
      */
     INTERNAL_ERROR,
 
-    /**
-     * API not initialized
-     */
     NOT_INITIALIZED_ERROR,
 
     /**

@@ -18,8 +18,7 @@ import android.view.ViewGroup;
 import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
-import android.widget.EditText;
-import android.text.InputType;
+// EditText and InputType removed as showFallbackPasswordInput is removed
 import org.web3j.crypto.Credentials;
 import android.widget.Toast;
 
@@ -39,8 +38,10 @@ import androidx.navigation.Navigation; // Import Navigation helper
 import com.example.byebit.R;
 import com.example.byebit.adapter.WalletAdapter;
 import androidx.appcompat.app.AlertDialog;
+// Assuming PasswordInputDialogFragment is in this package, user to verify
+import com.example.byebit.ui.dialog.PasswordInputDialogFragment;
 
-
+import com.example.byebit.ui.dialog.PasswordDialogResult; // ADD THIS IMPORT
 
 
 import com.example.byebit.databinding.FragmentDashboardBinding;
@@ -53,7 +54,9 @@ import com.example.byebit.util.WalletExporter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-
+import io.reactivex.Scheduler;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 
 
 public class DashboardFragment extends Fragment implements WalletAdapter.OnItemLongClickListener, WalletAdapter.OnDetailsClickListener, MenuProvider {
@@ -70,6 +73,8 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     private WalletExporter walletExporter;
 
     private WalletHandle currentWalletForDetails;
+    // For managing RxJava subscriptions
+    private final CompositeDisposable disposables = new CompositeDisposable();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -232,10 +237,50 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
             @Override
             public void onFailure(AuthenticationFailureReason reason) {
                 Log.w(TAG, "Biometric decryption failed for wallet " + (wallet != null ? wallet.getName() : "null") + ". Reason: " + reason.name());
+                Toast.makeText(getContext(), "Biometric authentication failed. Please enter password.", Toast.LENGTH_LONG).show();
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), R.string.biometric_unlock_fail_fallback, Toast.LENGTH_SHORT).show();
+                    // Ensure currentWalletForDetails is set for this attempt, as 'wallet' is the context.
+                    // It's already set at the beginning of onDetailsClick, but good to be mindful.
+                    // this.currentWalletForDetails = wallet; // Redundant if already set, but ensures context
+
+                    PasswordInputDialogFragment passwordDialog = PasswordInputDialogFragment.newInstance(
+                            getString(R.string.enter_password_for_wallet, wallet.getName()),
+                            getString(R.string.password_hint),
+                            getString(R.string.ok_button)
+                    );
+
+                    disposables.add(passwordDialog.getDialogEvents()
+                            .observeOn(Schedulers.from(getContext().getMainExecutor())) // Ensure UI updates are on the main thread
+                            .subscribe(
+                                    passwordDialogResult -> {
+                                        if (passwordDialogResult.isSuccess() && passwordDialogResult.password != null) {
+                                            if (DashboardFragment.this.currentWalletForDetails != null) { // Check if context is still valid
+                                                dashboardViewModel.loadCredentialsForWallet(DashboardFragment.this.currentWalletForDetails, passwordDialogResult.password);
+                                                // currentWalletForDetails will be cleared by the credential loading flow (success/failure/dismiss)
+                                            } else {
+                                                Log.w(TAG, "Password received from dialog, but currentWalletForDetails was null unexpectedly.");
+                                            }
+                                        } else { // Cancelled or other non-success
+                                            Log.d(TAG, "Password input cancelled or failed for wallet: " + (DashboardFragment.this.currentWalletForDetails != null ? DashboardFragment.this.currentWalletForDetails.getName() : "N/A"));
+                                            if (getContext() != null) {
+                                                Toast.makeText(getContext(), R.string.password_entry_cancelled, Toast.LENGTH_SHORT).show();
+                                            }
+                                            DashboardFragment.this.currentWalletForDetails = null; // Clear wallet context
+                                        }
+                                    },
+                                    throwable -> {
+                                        Log.e(TAG, "Error in password dialog stream for wallet: " + (DashboardFragment.this.currentWalletForDetails != null ? DashboardFragment.this.currentWalletForDetails.getName() : "N/A"), throwable);
+                                        if (getContext() != null) {
+                                            Toast.makeText(getContext(), "Error obtaining password.", Toast.LENGTH_SHORT).show();
+                                        }
+                                        DashboardFragment.this.currentWalletForDetails = null; // Clear wallet context on error
+                                    }
+                                    // onComplete: Handled by onNext logic as PasswordInputDialogFragment emits success/cancel before completing.
+                            ));
+                    passwordDialog.show(getChildFragmentManager(), "PasswordInputDialogFragmentTag_Rx");
+                } else {
+                     Log.w(TAG, "Context was null, cannot show password dialog for wallet " + (wallet != null ? wallet.getName() : "null"));
                 }
-                showFallbackPasswordInput(wallet);
             }
 
             @Override
@@ -247,39 +292,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
         });
     }
 
-    private void showFallbackPasswordInput(WalletHandle wallet) {
-        AlertDialog.Builder passwordDialogBuilder = new AlertDialog.Builder(requireContext());
-        passwordDialogBuilder.setTitle(getString(R.string.enter_password_for_wallet, wallet.getName()));
-
-        final EditText passwordInput = new EditText(requireContext());
-        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        passwordInput.setHint(R.string.password_hint);
-        // For better padding, wrap EditText in a FrameLayout or similar
-        android.widget.FrameLayout container = new android.widget.FrameLayout(requireContext());
-        android.widget.FrameLayout.LayoutParams params = new  android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        int margin = (int) getResources().getDimension(R.dimen.dialog_edittext_margin); // Define dialog_edittext_margin in dimens.xml
-        params.leftMargin = margin;
-        params.rightMargin = margin;
-        passwordInput.setLayoutParams(params);
-        container.addView(passwordInput);
-        passwordDialogBuilder.setView(container);
-
-
-        passwordDialogBuilder.setPositiveButton(R.string.ok_button, (dialog, which) -> {
-            String password = passwordInput.getText().toString();
-            if (password.isEmpty()) {
-                Toast.makeText(getContext(), R.string.password_cannot_be_empty, Toast.LENGTH_SHORT).show();
-                this.currentWalletForDetails = null;
-                return;
-            }
-            dashboardViewModel.loadCredentialsForWallet(wallet, password);
-        });
-        passwordDialogBuilder.setNegativeButton(R.string.cancel_button, (dialog, which) -> {
-            dialog.cancel();
-            this.currentWalletForDetails = null;
-        });
-        passwordDialogBuilder.show();
-    }
+    // showFallbackPasswordInput method is removed.
 
     private void showWalletDetailsDialog(WalletHandle wallet, Credentials credentials) {
         if (getContext() == null) return;
@@ -378,6 +391,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnItemL
     public void onDestroyView() {
         super.onDestroyView();
         // MenuProvider is automatically removed when using getViewLifecycleOwner()
+        disposables.clear(); // Clear all subscriptions
         // with addMenuProvider, so explicit removal is not strictly necessary.
         binding = null;
     }
