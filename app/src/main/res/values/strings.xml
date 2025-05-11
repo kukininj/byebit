@@ -55,4 +55,10 @@
     <string name="wallet_unlock_cancelled">Wallet unlock cancelled</string>
     <string name="wallet_details_title_format">Details: %s</string>
 
+    <!-- Strings for WalletUnlockDialogFragment -->
+    <string name="unlock_wallet_title">Unlock Wallet: %s</string>
+    <string name="unlock_wallet_attempting_biometric">Attempting to unlock %s using biometrics…</string>
+    <string name="unlock_wallet_enter_password">Enter password for %s</string>
+    <string name="unlock_button">Unlock</string>
+
 </resources>
