@@ -17,6 +17,20 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/wallet_list_item" /> <!-- Optional: Preview item layout -->
 
+    <!-- Floating Action Button to import wallets -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_import_wallets"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="152dp"
+        android:clickable="true"
+        android:contentDescription="@string/import_wallets_fab_desc"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@android:drawable/stat_sys_upload" />
+
     <!-- Floating Action Button to export wallets -->
     <!-- ADD THIS FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -24,11 +38,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="84dp"
         android:clickable="true"
         android:contentDescription="@string/export_wallets"
         android:focusable="true"
-        app:layout_constraintBottom_toTopOf="@+id/fab_create_wallet"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@android:drawable/stat_sys_download" />
 

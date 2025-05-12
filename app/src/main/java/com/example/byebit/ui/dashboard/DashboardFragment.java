@@ -19,6 +19,8 @@ import androidx.core.view.MenuProvider;
 import androidx.lifecycle.Lifecycle;
 import org.web3j.crypto.Credentials;
 import android.widget.Toast;
+import com.example.byebit.ui.dialog.WalletImportDialogFragment;
+import com.example.byebit.ui.dialog.WalletImportResult;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -67,6 +69,7 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
     private static final String TAG = "DashboardFragment";
     private static final String DEFAULT_EXPORT_FILE_NAME = "byebit_wallets_export.zip";
     private ActivityResultLauncher<Intent> exportWalletsLauncher;
+    private ActivityResultLauncher<Intent> importWalletsLauncher;
     private List<WalletHandle> walletsToExportHolder;
     private WalletExporter walletExporter;
 
@@ -113,6 +116,25 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                     walletsToExportHolder = null;
                 }
         );
+
+        importWalletsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Uri uri = result.getData().getData();
+                        if (uri != null) {
+                            Log.d(TAG, "ZIP file selected for import: " + uri.toString());
+                            showImportDialog(uri);
+                        } else {
+                            Log.w(TAG, "File selection returned null URI.");
+                            Toast.makeText(getContext(), "Failed to get file URI.", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Log.d(TAG, "File selection cancelled or failed.");
+                        Toast.makeText(getContext(), "File selection cancelled.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 
 
@@ -130,6 +152,10 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
         binding.fabCreateWallet.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.action_dashboard_to_createWalletFragment);
+        });
+
+        binding.fabImportWallets.setOnClickListener(v -> {
+            launchImportZipFilePicker();
         });
 
         binding.fabExportWallets.setOnClickListener(v -> {
@@ -396,6 +422,57 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
         disposables.clear(); // Clear all subscriptions
         // with addMenuProvider, so explicit removal is not strictly necessary.
         binding = null;
+    }
+
+    private void showImportDialog(@NonNull Uri zipUri) {
+        if (getContext() == null) return;
+
+        WalletImportDialogFragment importDialog = WalletImportDialogFragment.newInstance(zipUri);
+        importDialog.show(getChildFragmentManager(), "WalletImportDialogTag");
+
+        // Subscribe to the dialog results
+        disposables.add(importDialog.getDialogEvents()
+                .observeOn(Schedulers.from(getContext().getMainExecutor())) // Ensure UI updates on main thread
+                .subscribe(
+                        result -> {
+                            switch (result.status) {
+                                case SUCCESS:
+                                    int count = (result.importedWallets != null) ? result.importedWallets.size() : 0;
+                                    Log.i(TAG, "Wallet import successful. Count: " + count);
+                                    Toast.makeText(getContext(), String.format(getString(R.string.import_wallets_success_format), count), Toast.LENGTH_LONG).show();
+                                    // Optional: Explicitly trigger a refresh if LiveData doesn't update automatically
+                                    // dashboardViewModel.refreshAllWalletBalances(); // Or just let LiveData handle it
+                                    break;
+                                case FAILURE:
+                                    Log.e(TAG, "Wallet import failed: " + result.errorMessage);
+                                    Toast.makeText(getContext(), String.format(getString(R.string.import_wallets_failed), result.errorMessage), Toast.LENGTH_LONG).show();
+                                    break;
+                                case CANCELLED:
+                                    Log.d(TAG, "Wallet import cancelled.");
+                                    Toast.makeText(getContext(), getString(R.string.import_wallets_cancelled), Toast.LENGTH_SHORT).show();
+                                    break;
+                            }
+                        },
+                        throwable -> {
+                            Log.e(TAG, "Error observing WalletImportDialog events", throwable);
+                            Toast.makeText(getContext(), "An error occurred during the import process.", Toast.LENGTH_SHORT).show();
+                        },
+                        () -> Log.d(TAG, "WalletImportDialog event stream completed.")
+                ));
+    }
+
+    private void launchImportZipFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/zip");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        try {
+            importWalletsLauncher.launch(Intent.createChooser(intent, "Select ZIP file to import"));
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Handle case where no file manager app is available
+            Toast.makeText(getContext(), getString(R.string.no_app_found_to_pick_file), Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "No activity found to handle ACTION_GET_CONTENT for application/zip");
+        }
     }
 
 }

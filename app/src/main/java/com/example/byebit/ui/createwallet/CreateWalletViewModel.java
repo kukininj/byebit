@@ -14,18 +14,16 @@ import com.example.byebit.repository.WalletRepository;
 import org.web3j.crypto.exception.CipherException;
 
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class CreateWalletViewModel extends AndroidViewModel {
 
     private static final String TAG = "CreateWalletViewModel";
 
     private final WalletRepository walletRepository;
-    private final ExecutorService executorService;
+    private final CompositeDisposable disposables = new CompositeDisposable(); // ADD THIS LINE
 
     private final MutableLiveData<CreationResult> _creationResult = new MutableLiveData<>();
 
@@ -43,34 +41,46 @@ public class CreateWalletViewModel extends AndroidViewModel {
     public CreateWalletViewModel(Application application) {
         super(application);
         walletRepository = new WalletRepository(application);
-        executorService = Executors.newFixedThreadPool(1);
     }
 
     public void createWallet(String name, String password, @Nullable byte[] encryptedPassword, @Nullable byte[] iv) {
         _isLoading.setValue(true);
         _creationResult.setValue(CreationResult.loading());
 
-        executorService.execute(() -> {
-            try {
-                WalletHandle newWallet = walletRepository.createNewWallet(name, password, encryptedPassword, iv);
-                _creationResult.postValue(CreationResult.success(newWallet));
-                Log.d(TAG, "Wallet creation task completed successfully.");
-            } catch (InvalidAlgorithmParameterException | CipherException |
-                     NoSuchAlgorithmException | IOException | NoSuchProviderException e) {
-                Log.e(TAG, "Error creating wallet", e);
-                _creationResult.postValue(CreationResult.error(e.getMessage()));
-            } finally {
-                _isLoading.postValue(false);
-                Log.d(TAG, "Wallet creation task finished.");
-            }
-        });
+        disposables.add(walletRepository.createNewWallet(name, password, encryptedPassword, iv)
+                .subscribeOn(Schedulers.io()) // Perform the operation on a background thread
+                .observeOn(Schedulers.from(getApplication().getMainExecutor())) // Observe results on the main thread
+                .subscribe(
+                        // onSuccess: Lambda for successful wallet creation
+                        walletHandle -> {
+                            _creationResult.setValue(CreationResult.success(walletHandle));
+                            _isLoading.setValue(false);
+                            Log.d(TAG, "Wallet creation task completed successfully via Async.");
+                        },
+                        // onError: Lambda for handling errors
+                        throwable -> {
+                            // Check for specific exceptions if needed, otherwise use generic message
+                            String errorMessage = "Failed to create wallet: " + throwable.getMessage();
+                            if (throwable instanceof CipherException) {
+                                errorMessage = "Encryption error during wallet creation.";
+                            } else if (throwable instanceof IOException) {
+                                errorMessage = "File system error during wallet creation.";
+                            }
+                            // Add more specific error handling if required
+
+                            Log.e(TAG, "Error creating wallet via Async", throwable);
+                            _creationResult.setValue(CreationResult.error(errorMessage));
+                            _isLoading.setValue(false);
+                        }
+                )
+        );
     }
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        executorService.shutdown();
-        Log.d(TAG, "ViewModel executor shut down.");
+        Log.d(TAG, "ViewModel cleared, shutting down executor and clearing disposables."); // Modify log message
+        disposables.clear(); // ADD THIS LINE to dispose of subscriptions
         walletRepository.shutdown();
     }
 

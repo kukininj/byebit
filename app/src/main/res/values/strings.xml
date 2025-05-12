@@ -13,7 +13,13 @@
     <string name="add_new_wallet">Add new wallet</string>
 
     <!-- ADD THIS STRING -->
+    <string name="wallet_import_dialog_title">Import Wallets</string>
     <string name="export_wallets">Export Wallets</string>
+    <string name="import_wallets_fab_desc">Import Wallets from ZIP</string>
+    <string name="import_wallets_success_format">Import successful: %d wallet(s) added.</string>
+    <string name="import_wallets_failed">Wallet import failed: %s</string>
+    <string name="import_wallets_cancelled">Wallet import cancelled.</string>
+    <string name="no_app_found_to_pick_file">No app found to pick the file.</string>
     <string name="details_button_text">Details</string>
 
     <!-- Sepolia RPC URL -->
@@ -72,5 +78,7 @@
     <string name="error_checking_root">Could not determine root status.</string>
     <string name="root_check_title">Root Status Check</string>
     <string name="ok">OK</string>
+    <string name="importing_wallets_message">Importing wallets...</string>
+    <string name="import_wallets_title">Import wallets title</string>
 
 </resources>

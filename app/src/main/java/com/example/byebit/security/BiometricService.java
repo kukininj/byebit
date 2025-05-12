@@ -12,7 +12,6 @@ import androidx.biometric.BiometricPrompt;
 import androidx.fragment.app.Fragment;
 
 import com.example.byebit.domain.WalletHandle;
-import com.example.byebit.exception.PasswordNotStoredException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

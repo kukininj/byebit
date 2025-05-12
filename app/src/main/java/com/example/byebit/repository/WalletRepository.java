@@ -23,12 +23,13 @@ import org.web3j.utils.Convert;
 
 import java.io.File;
 import java.io.IOException;
+// ADDED: Import RxJava Single
+import io.reactivex.Single;
+// ADDED: Import RxJava Schedulers
+import io.reactivex.schedulers.Schedulers;
 // ADDED: Import BigDecimal
 import java.math.BigDecimal;
 import java.math.BigInteger; // Import BigInteger
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -61,41 +62,29 @@ public class WalletRepository {
         return walletHandleDao.getAll();
     }
 
-    /**
-     * Creates a new Ethereum wallet file and saves its handle to the database.
-     *
-     * @param name The name for the wallet handle.
-     * @param password The password to encrypt the wallet file.
-     * @param encryptedPassword The password encrypted by biometric prompt (can be null).
-     * @param iv The IV used for biometric encryption (can be null).
-     * @param savePassword If true, encryptedPassword and iv are saved in the DB. If false, they are set to null before saving.
-     * @return The created WalletHandle entity.
-     * @throws InvalidAlgorithmParameterException
-     * @throws CipherException
-     * @throws NoSuchAlgorithmException
-     * @throws IOException
-     * @throws NoSuchProviderException
-     */
-    // MODIFY THIS METHOD SIGNATURE TO ACCEPT savePassword BOOLEAN
-    public WalletHandle createNewWallet(String name, String password, @Nullable byte[] encryptedPassword, @Nullable byte[] iv) throws InvalidAlgorithmParameterException, CipherException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
-        Log.d(TAG, "Creating new wallet file..."); // Add log
-        // Generate the wallet file and load credentials to get the address
-        String filename = WalletUtils.generateLightNewWalletFile(password, walletsDir);
-        Credentials credentials = WalletUtils.loadCredentials(password, new File(walletsDir, filename));
-        String address = credentials.getAddress();
-        Log.d(TAG, "Wallet file created: " + filename + ", Address: " + address); // Add log
+    public Single<WalletHandle> createNewWallet(String name, String password, @Nullable byte[] encryptedPassword, @Nullable byte[] encryptedPasswordIv) {
+        Log.d(TAG, "Creating new wallet..."); // Add log
+        return Single.fromCallable(() -> {
+            String filename = WalletUtils.generateLightNewWalletFile(password, walletsDir);
+            File walletFile = new File(walletsDir, filename);
 
-        // Create the WalletHandle entity
-        WalletHandle walletHandle = new WalletHandle(UUID.randomUUID(), name, filename, address, encryptedPassword, iv);
+            if (!walletFile.exists()) {
+                Log.e(TAG, "Wallet file not found for import: " + walletFile.getAbsolutePath());
+                throw new IOException("Wallet file not found: " + walletFile.getAbsolutePath());
+            }
 
-        // Save the WalletHandle to the database using the executor
-        databaseWriteExecutor.execute(() -> {
-            // ADD THIS CONDITIONAL LOGIC
+            Log.d(TAG, "Loading credentials from file: " + walletFile.getName());
+            Credentials credentials = WalletUtils.loadCredentials(password, walletFile);
+            String address = credentials.getAddress();
+            Log.d(TAG, "Successfully loaded credentials. Address: " + address);
+
+            WalletHandle walletHandle = new WalletHandle(UUID.randomUUID(), name, filename, address, encryptedPassword, encryptedPasswordIv);
+
             walletHandleDao.insertAll(walletHandle);
-            Log.d(TAG, "Inserted new wallet into DB: " + walletHandle.getName()); // Log DB insert
-        });
+            Log.d(TAG, "Inserted imported wallet into DB: " + walletHandle.getName() + " (Address: " + walletHandle.getAddress() + ")");
 
-        return walletHandle;
+            return walletHandle;
+        }).subscribeOn(Schedulers.io());
     }
 
     public Credentials getCredentials(WalletHandle walletHandle, String password) throws IOException, CipherException {
