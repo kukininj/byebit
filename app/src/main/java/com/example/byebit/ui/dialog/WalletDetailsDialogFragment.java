@@ -1,11 +1,17 @@
 package com.example.byebit.ui.dialog;
 
+import static android.view.WindowManager.LayoutParams.FLAG_SECURE;
+
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -14,6 +20,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.byebit.R;
+
+import java.util.Optional;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
@@ -28,9 +36,6 @@ public class WalletDetailsDialogFragment extends DialogFragment {
     private static final String ARG_PRIVATE_KEY = "privateKey";
 
     // RESULT_KEY_ACTION_TYPE and specific action type strings are removed
-
-    private String walletName;
-    private String privateKey;
 
     private final PublishSubject<WalletDetailDialogResult> resultSubject = PublishSubject.create();
     private boolean actionTaken = false; // To track if a button that dismisses dialog was clicked
@@ -52,11 +57,27 @@ public class WalletDetailsDialogFragment extends DialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            walletName = getArguments().getString(ARG_WALLET_NAME);
-            // walletAddress is used in message, privateKey for copy
-            privateKey = getArguments().getString(ARG_PRIVATE_KEY);
-        }
+        Optional.ofNullable(getActivity())
+                .map(Activity::getWindow)
+                .ifPresentOrElse(window -> {
+                    Log.d(TAG, "onCreate: setting FLAG_SECURE");
+                    window.setFlags(FLAG_SECURE, FLAG_SECURE);
+                }, () -> {
+                    Log.w(TAG, "onCreate: window not available to set FLAG_SECURE");
+                });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Optional.ofNullable(getActivity())
+                .map(Activity::getWindow)
+                .ifPresentOrElse(window -> {
+                    Log.d(TAG, "onDestroyView: setting FLAG_SECURE");
+                    window.clearFlags(FLAG_SECURE);
+                }, () -> {
+                    Log.w(TAG, "onDestroyView: window not available to clear FLAG_SECURE");
+                });
     }
 
     @NonNull
