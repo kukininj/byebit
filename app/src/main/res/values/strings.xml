@@ -66,4 +66,11 @@
 
     <string name="checkbox_save_password">Save password for quick unlock</string>
 
+    <string name="checking_root_status">Checking root status...</string>
+    <string name="device_is_rooted_warning">Warning: Your device appears to be rooted. Some features might be disabled or behave unexpectedly for security reasons.</string>
+    <string name="device_not_rooted">Device is not rooted.</string>
+    <string name="error_checking_root">Could not determine root status.</string>
+    <string name="root_check_title">Root Status Check</string>
+    <string name="ok">OK</string>
+
 </resources>
