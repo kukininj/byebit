@@ -12,6 +12,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import android.widget.CheckBox; // Add this import
+
 import androidx.fragment.app.DialogFragment;
 
 import com.example.byebit.R;
@@ -29,6 +31,7 @@ public class PasswordInputDialogFragment extends DialogFragment {
     private static final String ARG_POSITIVE_BUTTON_TEXT = "positive_button_text";
 
     private TextInputEditText passwordEditText;
+    private CheckBox savePasswordCheckBox; // Add this field
 
     // RxJava Subject to emit dialog results
     private final PublishSubject<PasswordDialogResult> resultSubject = PublishSubject.create();
@@ -73,6 +76,7 @@ public class PasswordInputDialogFragment extends DialogFragment {
 
         passwordEditText = view.findViewById(R.id.password_edit_text);
         TextInputLayout passwordTextInputLayout = view.findViewById(R.id.password_text_input_layout);
+        savePasswordCheckBox = view.findViewById(R.id.save_password_checkbox); // Find the checkbox
 
         if (!TextUtils.isEmpty(hint)) {
             passwordTextInputLayout.setHint(hint);
@@ -103,6 +107,8 @@ public class PasswordInputDialogFragment extends DialogFragment {
 
             d.getButton(Dialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String password = passwordEditText.getText().toString();
+                boolean savePassword = savePasswordCheckBox.isChecked(); // Get checkbox state
+
                 if (TextUtils.isEmpty(password)) {
                     if (passwordTextInputLayout != null) {
                         passwordTextInputLayout.setError(getString(R.string.password_cannot_be_empty));
@@ -113,7 +119,8 @@ public class PasswordInputDialogFragment extends DialogFragment {
                     if (passwordTextInputLayout != null) {
                         passwordTextInputLayout.setError(null); // Clear error
                     }
-                    resultSubject.onNext(PasswordDialogResult.success(password));
+                    // Pass the password and the checkbox state
+                    resultSubject.onNext(PasswordDialogResult.success(password, savePassword));
                     dismiss(); // Dismiss dialog on success
                 }
             });

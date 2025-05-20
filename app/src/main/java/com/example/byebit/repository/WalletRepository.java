@@ -9,7 +9,6 @@ import com.example.byebit.dao.WalletHandleDao;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData; // Import MutableLiveData
 
 import com.example.byebit.domain.WalletHandle;
 
@@ -187,5 +186,14 @@ public class WalletRepository {
             web3j.shutdown(); // Shutdown the Web3j client
             Log.d(TAG, "Web3j client shut down."); // Log shutdown
         }
+    }
+
+    public void setPasswordForWallet(WalletHandle handle, byte[] encryptedPassword, byte[] passwordIv) {
+        handle.setEncryptedPassword(encryptedPassword);
+        handle.setIv(passwordIv);
+
+        databaseWriteExecutor.execute(() -> {
+            walletHandleDao.update(handle);
+        });
     }
 }

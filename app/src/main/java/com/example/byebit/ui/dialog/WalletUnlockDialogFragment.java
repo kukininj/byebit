@@ -129,7 +129,7 @@ public class WalletUnlockDialogFragment extends DialogFragment {
                     try {
                         byte[] bytes = cipher.doFinal(encryptedPassword);
 
-                        resultSubject.onNext(PasswordDialogResult.success(new String(bytes, StandardCharsets.UTF_8)));
+                        resultSubject.onNext(PasswordDialogResult.success(new String(bytes, StandardCharsets.UTF_8), false));
                         dismissSafely();
                     } catch (BadPaddingException | IllegalBlockSizeException e) {
                         Log.e(TAG, "Decryption failed: " + e.getMessage(), e);

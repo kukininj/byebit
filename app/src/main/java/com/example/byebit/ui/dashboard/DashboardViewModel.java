@@ -93,6 +93,10 @@ public class DashboardViewModel extends AndroidViewModel {
         _credentialsResult.setValue(null);
     }
 
+    public void setPasswordForWallet(WalletHandle handle, byte[] result, byte[] iv) {
+        walletRepository.setPasswordForWallet(handle, result, iv);
+    }
+
     public static class CredentialsResult {
         public final Credentials credentials;
         public final String error;

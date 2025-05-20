@@ -6,7 +6,6 @@ import androidx.room.PrimaryKey;
 
 // Add this import
 import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.UUID;
 
 // Note: @TypeConverters annotation is now on AppDatabase
@@ -31,9 +30,9 @@ public class WalletHandle {
 
     private Long balanceLastUpdated;
 
-    private final byte[] encryptedPassword;
+    private byte[] encryptedPassword;
 
-    private final byte[] iv;
+    private byte[] iv;
 
     public Long getBalanceLastUpdated() {
         return balanceLastUpdated;
@@ -92,5 +91,13 @@ public class WalletHandle {
 
     public byte[] getIv() {
         return iv;
+    }
+
+    public void setEncryptedPassword(byte[] encryptedPassword) {
+        this.encryptedPassword = encryptedPassword;
+    }
+
+    public void setIv(byte[] Iv) {
+        this.iv = Iv;
     }
 }

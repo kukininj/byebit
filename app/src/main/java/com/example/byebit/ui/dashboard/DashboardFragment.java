@@ -36,6 +36,10 @@ import androidx.navigation.Navigation;
 import com.example.byebit.R;
 import com.example.byebit.adapter.WalletAdapter;
 import androidx.appcompat.app.AlertDialog;
+
+import com.example.byebit.security.AuthenticationFailureReason;
+import com.example.byebit.security.AuthenticationListener;
+import com.example.byebit.ui.dialog.PasswordDialogResult;
 import com.example.byebit.ui.dialog.WalletUnlockDialogFragment;
 
 import com.example.byebit.ui.dialog.WalletDetailDialogResult;
@@ -295,6 +299,9 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                 .subscribe(
                         passwordResult -> {
                             if (passwordResult.isSuccess() && passwordResult.password != null) {
+                                if (passwordResult.savePassword) {
+                                    savePassword(wallet, passwordResult);
+                                }
                                 dashboardViewModel.loadCredentialsForWallet(this.currentWalletForDetails, passwordResult.password);
                             } else { // Cancelled or other non-success from WalletUnlockDialogFragment
                                 Log.d(TAG, "Wallet unlock cancelled or failed for: " + this.currentWalletForDetails.getName());
@@ -318,6 +325,25 @@ public class DashboardFragment extends Fragment implements WalletAdapter.OnDetai
                 ));
 
         walletUnlockDialog.show(getChildFragmentManager(), "WalletUnlockDialogTag");
+    }
+
+    private void savePassword(WalletHandle handle, PasswordDialogResult result) {
+        biometricService.encrypt(handle.getName(), result.password, new AuthenticationListener() {
+            @Override
+            public void onSuccess(byte[] result, byte[] iv) {
+                dashboardViewModel.setPasswordForWallet(handle, result, iv);
+            }
+
+            @Override
+            public void onFailure(AuthenticationFailureReason reason) {
+                Toast.makeText(getContext(), "Biometric authentication failed: " + reason, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancel() {
+                Toast.makeText(getContext(), "Biometric authentication cancelled", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void launchSaveZipFilePicker() {
