@@ -15,6 +15,7 @@ import org.web3j.crypto.exception.CipherException;
 
 import java.io.IOException;
 
+import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
@@ -43,11 +44,15 @@ public class CreateWalletViewModel extends AndroidViewModel {
         walletRepository = new WalletRepository(application);
     }
 
-    public void createWallet(String name, String password, @Nullable byte[] encryptedPassword, @Nullable byte[] iv) {
+    public void createWallet(String name, String password, @Nullable String privateKey, @Nullable byte[] encryptedPassword, @Nullable byte[] iv) {
         _isLoading.setValue(true);
         _creationResult.setValue(CreationResult.loading());
 
-        disposables.add(walletRepository.createNewWallet(name, password, encryptedPassword, iv)
+        Single<WalletHandle> walletHandleSingle = privateKey != null ?
+                walletRepository.createNewWallet(name, password, privateKey, encryptedPassword, iv)
+                : walletRepository.createNewWallet(name, password, encryptedPassword, iv);
+
+        disposables.add(walletHandleSingle
                 .subscribeOn(Schedulers.io()) // Perform the operation on a background thread
                 .observeOn(Schedulers.from(getApplication().getMainExecutor())) // Observe results on the main thread
                 .subscribe(

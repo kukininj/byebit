@@ -12,7 +12,9 @@ import androidx.lifecycle.LiveData;
 
 import com.example.byebit.domain.WalletHandle;
 
+import org.web3j.crypto.Bip44WalletUtils;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.crypto.exception.CipherException;
 import org.web3j.protocol.Web3j; // Import Web3j
@@ -20,6 +22,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName; // Import DefaultBlock
 import org.web3j.protocol.core.methods.response.EthGetBalance; // Import EthGetBalance
 import org.web3j.protocol.http.HttpService; // Import HttpService
 import org.web3j.utils.Convert;
+import org.web3j.utils.Numeric;
 
 import java.io.File;
 import java.io.IOException;
@@ -86,6 +89,34 @@ public class WalletRepository {
             return walletHandle;
         }).subscribeOn(Schedulers.io());
     }
+
+    public Single<WalletHandle> createNewWallet(String name, String password, String privateKeyStr, @Nullable byte[] encryptedPassword, @Nullable byte[] encryptedPasswordIv) {
+        Log.d(TAG, "Creating new wallet from Secret Recovery Phase ..."); // Add log
+        return Single.fromCallable(() -> {
+            Log.d(TAG, "Loading credentials from mnemonic");
+            BigInteger privateKey = Numeric.toBigIntNoPrefix(privateKeyStr);
+            String filename = WalletUtils.generateWalletFile(password, ECKeyPair.create(privateKey), walletsDir, false);
+            File walletFile = new File(walletsDir, filename);
+
+            if (!walletFile.exists()) {
+                Log.e(TAG, "Wallet file not found for import: " + walletFile.getAbsolutePath());
+                throw new IOException("Wallet file not found: " + walletFile.getAbsolutePath());
+            }
+
+            Log.d(TAG, "Loading credentials from file: " + walletFile.getName());
+            Credentials credentials = WalletUtils.loadCredentials(password, walletFile);
+            String address = credentials.getAddress();
+            Log.d(TAG, "Successfully loaded credentials. Address: " + address);
+
+            WalletHandle walletHandle = new WalletHandle(UUID.randomUUID(), name, filename, address, encryptedPassword, encryptedPasswordIv);
+
+            walletHandleDao.insertAll(walletHandle);
+            Log.d(TAG, "Inserted imported wallet into DB: " + walletHandle.getName() + " (Address: " + walletHandle.getAddress() + ")");
+
+            return walletHandle;
+        }).subscribeOn(Schedulers.io());
+    }
+
 
     public Credentials getCredentials(WalletHandle walletHandle, String password) throws IOException, CipherException {
         File walletFile = new File(walletsDir, walletHandle.getFilename());

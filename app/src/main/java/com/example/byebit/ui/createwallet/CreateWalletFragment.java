@@ -1,5 +1,7 @@
 package com.example.byebit.ui.createwallet;
 
+import static java.util.Optional.ofNullable;
+
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,12 +20,17 @@ import com.example.byebit.security.AuthenticationFailureReason;
 import com.example.byebit.security.AuthenticationListener;
 import com.example.byebit.security.BiometricService;
 
+import java.util.Objects;
+
 public class CreateWalletFragment extends Fragment {
 
     private FragmentCreateWalletBinding binding;
     private CreateWalletViewModel createWalletViewModel;
     private BiometricService biometricService;
     private CheckBox savePasswordCheckBox;
+    private com.google.android.material.textfield.TextInputLayout recoveryPhraseInputLayout;
+    private com.google.android.material.textfield.TextInputEditText recoveryPhraseEditText;
+    private CheckBox showRecoveryPhraseCheckBox;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -35,6 +42,19 @@ public class CreateWalletFragment extends Fragment {
         View root = binding.getRoot();
 
         savePasswordCheckBox = binding.checkboxSavePassword;
+        // Initialize the new UI elements from the binding
+        showRecoveryPhraseCheckBox = binding.checkboxShowRecoveryPhrase;
+        recoveryPhraseInputLayout = binding.textInputLayoutRecoveryPhrase;
+        recoveryPhraseEditText = binding.editTextPrivateKey; // Assuming this ID exists in your layout
+
+        // Initially hide the recovery phrase input field
+        recoveryPhraseInputLayout.setVisibility(View.GONE);
+
+        // Set up the listener for the checkbox to toggle the visibility of the recovery phrase input field
+        showRecoveryPhraseCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            recoveryPhraseInputLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+
 
         binding.buttonCreateWallet.setOnClickListener(v -> attemptCreateWallet());
 
@@ -65,6 +85,9 @@ public class CreateWalletFragment extends Fragment {
         String name = binding.editTextWalletName.getText().toString().trim();
         String password = binding.editTextPassword.getText().toString();
         String confirmPassword = binding.editTextConfirmPassword.getText().toString();
+        String privateKey = ofNullable(binding.editTextPrivateKey.getText())
+                .map(Objects::toString)
+                .orElse(null);
         // ADD THIS LINE TO GET THE CHECKBOX STATE
         boolean savePassword = savePasswordCheckBox.isChecked();
 
@@ -100,7 +123,7 @@ public class CreateWalletFragment extends Fragment {
             biometricService.encrypt(name, password, new AuthenticationListener() {
                 @Override
                 public void onSuccess(byte[] result, byte[] iv) {
-                    createWalletViewModel.createWallet(name, password, result, iv);
+                    createWalletViewModel.createWallet(name, password, privateKey, result, iv);
                 }
 
                 @Override
@@ -114,7 +137,7 @@ public class CreateWalletFragment extends Fragment {
                 }
             });
         } else if (isValid && !savePassword) {
-            createWalletViewModel.createWallet(name, password, null, null);
+            createWalletViewModel.createWallet(name, password, privateKey, null, null);
         }
     }
 

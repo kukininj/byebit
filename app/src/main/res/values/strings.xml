@@ -13,6 +13,8 @@
     <string name="add_new_wallet">Add new wallet</string>
 
     <!-- ADD THIS STRING -->
+    <string name="checkbox_show_private_key_input">Use existing wallet</string>
+    <string name="hint_private_key">Private key</string>
     <string name="wallet_import_dialog_title">Import Wallets</string>
     <string name="export_wallets">Export Wallets</string>
     <string name="import_wallets_fab_desc">Import Wallets from ZIP</string>
