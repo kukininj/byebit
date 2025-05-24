@@ -81,7 +81,6 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-    // ---------- VIEW HOLDER FOR DATE HEADER ----------
     static class DateHeaderViewHolder extends RecyclerView.ViewHolder {
         private final TextView dateText;
 
@@ -95,7 +94,6 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-    // ---------- VIEW HOLDER FOR TRANSACTION ----------
     class TransactionViewHolder extends RecyclerView.ViewHolder {
         private final ImageView directionIcon;
         private final TextView directionText;

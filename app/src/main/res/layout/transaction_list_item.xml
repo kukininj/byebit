@@ -3,7 +3,6 @@
     android:layout_height="wrap_content"
     android:padding="12dp">
 
-    <!-- Ikona kierunku -->
     <ImageView
         android:id="@+id/direction_icon"
         android:layout_width="40dp"
@@ -13,7 +12,6 @@
         android:layout_marginEnd="8dp"
         android:contentDescription="@string/direction_icon" />
 
-    <!-- Kierunek + Status -->
     <LinearLayout
         android:id="@+id/left_text_container"
         android:orientation="vertical"
@@ -40,7 +38,6 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- Przycisk Details wycentrowany poziomo na wysokości kontenera tekstu -->
     <Button
         android:id="@+id/button_details"
         style="?android:attr/buttonBarButtonStyle"
@@ -50,7 +47,6 @@
         android:layout_alignTop="@id/left_text_container"
         android:layout_centerHorizontal="true" />
 
-    <!-- Kwota -->
     <TextView
         android:id="@+id/text_amount"
         android:layout_width="wrap_content"
@@ -62,7 +58,6 @@
         android:layout_alignTop="@id/left_text_container"
         android:layout_marginBottom="4dp" />
 
-    <!-- Godzina -->
     <TextView
         android:id="@+id/text_time"
         android:layout_width="wrap_content"
@@ -73,7 +68,6 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true" />
 
-    <!-- Separator -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

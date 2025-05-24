@@ -31,7 +31,6 @@ public class GroupedTransaction {
     public static List<GroupedTransaction> groupTransactionsByDate(List<TransactionHandle> allTransactions) {
         Map<LocalDate, List<TransactionHandle>> groupedMap = new LinkedHashMap<>();
 
-        // Sortujemy malejąco po dacie
         allTransactions.sort((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()));
 
         for (TransactionHandle tx : allTransactions) {
