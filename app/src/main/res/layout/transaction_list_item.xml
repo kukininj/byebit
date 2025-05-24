@@ -1,23 +1,27 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp"
-    android:gravity="center_vertical">
+    android:padding="12dp">
 
-    <!-- Lewa część: ikona + kolumna -->
+    <!-- Ikona kierunku -->
     <ImageView
         android:id="@+id/direction_icon"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
         android:layout_marginEnd="8dp"
         android:contentDescription="@string/direction_icon" />
 
+    <!-- Kierunek + Status -->
     <LinearLayout
+        android:id="@+id/left_text_container"
         android:orientation="vertical"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="wrap_content">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/direction_icon"
+        android:layout_alignTop="@id/direction_icon"
+        android:layout_marginEnd="8dp">
 
         <TextView
             android:id="@+id/text_direction"
@@ -36,30 +40,43 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- Prawa część: kwota i button wyrównane razem po prawej -->
-    <LinearLayout
-        android:orientation="horizontal"
+    <!-- Przycisk Details wycentrowany poziomo na wysokości kontenera tekstu -->
+    <Button
+        android:id="@+id/button_details"
+        style="?android:attr/buttonBarButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="end"
-        android:layout_gravity="center_vertical">
+        android:text="@string/details_button_text"
+        android:layout_alignTop="@id/left_text_container"
+        android:layout_centerHorizontal="true" />
 
-        <TextView
-            android:id="@+id/text_amount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="+0.005 ETH"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:gravity="end"
-            android:layout_marginEnd="8dp" />
+    <!-- Kwota -->
+    <TextView
+        android:id="@+id/text_amount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+0.005 ETH"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@id/left_text_container"
+        android:layout_marginBottom="4dp" />
 
-        <Button
-            android:id="@+id/button_details"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/details_button_text"
-            style="?android:attr/buttonBarButtonStyle" />
-    </LinearLayout>
+    <!-- Godzina -->
+    <TextView
+        android:id="@+id/text_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="14:35"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true" />
 
-</LinearLayout>
+    <!-- Separator -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_alignParentBottom="true"/>
+</RelativeLayout>

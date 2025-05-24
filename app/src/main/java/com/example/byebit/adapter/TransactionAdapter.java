@@ -5,6 +5,7 @@ import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -15,8 +16,11 @@ import com.example.byebit.R;
 import com.example.byebit.domain.GroupedTransaction;
 import com.example.byebit.domain.TransactionHandle;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -85,11 +89,13 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     // ---------- VIEW HOLDER FOR TRANSACTION ----------
-    static class TransactionViewHolder extends RecyclerView.ViewHolder {
+    class TransactionViewHolder extends RecyclerView.ViewHolder {
         private final ImageView directionIcon;
         private final TextView directionText;
         private final TextView statusText;
         private final TextView amountText;
+        private final TextView timeText;
+        private final Button detailsButton;
 
         public TransactionViewHolder(View itemView) {
             super(itemView);
@@ -97,13 +103,14 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             directionText = itemView.findViewById(R.id.text_direction);
             statusText = itemView.findViewById(R.id.text_status);
             amountText = itemView.findViewById(R.id.text_amount);
+            timeText = itemView.findViewById(R.id.text_time);
+            detailsButton = itemView.findViewById(R.id.button_details);
         }
 
         public void bind(TransactionHandle tx) {
             directionText.setText(tx.getDirection());
             directionText.setTypeface(null, Typeface.BOLD);
 
-            // Status color
             switch (tx.getStatus()) {
                 case "Success":
                     statusText.setTextColor(Color.parseColor("#4CAF50")); // green
@@ -120,7 +127,6 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             statusText.setText(tx.getStatus());
 
-            // Direction icon & amount formatting
             if ("Send".equalsIgnoreCase(tx.getDirection())) {
                 directionIcon.setImageResource(R.drawable.ic_send);
                 amountText.setText("-" + tx.getTransactionAmount() + " ETH");
@@ -128,6 +134,19 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 directionIcon.setImageResource(R.drawable.ic_receive);
                 amountText.setText("+" + tx.getTransactionAmount() + " ETH");
             }
+
+            timeText.setText(formatTime(tx.getTimestamp().toEpochMilli()));
+
+
+            // Optional: add onClick listener for Details
+            detailsButton.setOnClickListener(v -> {
+                // TODO: implement details view
+            });
         }
+    }
+
+    private String formatTime(long timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        return sdf.format(new Date(timestamp));
     }
 }
