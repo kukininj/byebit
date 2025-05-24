@@ -28,8 +28,15 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int VIEW_TYPE_TRANSACTION = 1;
 
     private final List<Object> items = new ArrayList<>();
+    private final OnTransactionDetailsClickListener detailsClickListener;
 
-    public <E> TransactionAdapter(ArrayList<E> ignoredEs) {
+    public interface OnTransactionDetailsClickListener {
+        void onDetailsClick(TransactionHandle transaction);
+    }
+
+    public TransactionAdapter(List<GroupedTransaction> groupedTransactions, OnTransactionDetailsClickListener listener) {
+        this.detailsClickListener = listener;
+        setGroupedTransactions(groupedTransactions);
     }
 
     public void setGroupedTransactions(List<GroupedTransaction> groupedList) {
@@ -137,10 +144,10 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             timeText.setText(formatTime(tx.getTimestamp().toEpochMilli()));
 
-
-            // Optional: add onClick listener for Details
             detailsButton.setOnClickListener(v -> {
-                // TODO: implement details view
+                if (detailsClickListener != null) {
+                    detailsClickListener.onDetailsClick(tx);
+                }
             });
         }
     }

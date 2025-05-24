@@ -17,6 +17,7 @@ import com.example.byebit.dao.TransactionHandleDao;
 import com.example.byebit.databinding.FragmentHomeBinding;
 import com.example.byebit.domain.TransactionHandle;
 import com.example.byebit.domain.GroupedTransaction;
+import com.example.byebit.ui.dialog.TransactionDetailsDialogFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,19 @@ public class HomeFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setHasFixedSize(true);
 
-        transactionAdapter = new TransactionAdapter(new ArrayList<>());
+        transactionAdapter = new TransactionAdapter(new ArrayList<>(), transaction -> {
+            TransactionDetailsDialogFragment dialog = TransactionDetailsDialogFragment.newInstance(
+                    transaction.getId().toString(),
+                    transaction.getTimestamp().toString(),
+                    transaction.getSenderAddress(),
+                    transaction.getReceiverAddress(),
+                    String.valueOf(transaction.getTransactionAmount()),
+                    String.valueOf(transaction.getTransactionFee()),
+                    transaction.getBlockchainType()
+            );
+            dialog.show(getParentFragmentManager(), "TransactionDetailsDialog");
+        });
+
         recyclerView.setAdapter(transactionAdapter);
     }
 
@@ -59,7 +72,6 @@ public class HomeFragment extends Fragment {
             }
         });
     }
-
 
     @Override
     public void onDestroyView() {
