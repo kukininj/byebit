@@ -117,4 +117,14 @@ public class TransactionHandle {
     public Instant getTimestamp() {
         return timestamp;
     }
+
+    @Override
+    public String toString() {
+        return "TransactionHandle{" +
+                "direction='" + direction + '\'' +
+                ", status='" + status + '\'' +
+                ", amount=" + transactionAmount +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }
