@@ -6,6 +6,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Transformations;
 import androidx.work.Constraints;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
@@ -25,16 +26,18 @@ public class HomeViewModel extends AndroidViewModel {
     private static final String SYNC_WORK_TAG = "transaction_sync_work_onetime"; // Unique tag for one-time work
 
     private final WorkManager workManager;
-    private final LiveData<List<WorkInfo>> syncWorkInfoLiveData;
+    private final LiveData<Event> syncWorkInfoLiveData;
 
     public HomeViewModel(Application application) {
         super(application);
         workManager = WorkManager.getInstance(application);
         // Observe work by tag. We'll only have one unique work with this tag at a time.
-        syncWorkInfoLiveData = workManager.getWorkInfosForUniqueWorkLiveData(SYNC_WORK_TAG);
+        syncWorkInfoLiveData = Transformations.map(workManager.getWorkInfosForUniqueWorkLiveData(SYNC_WORK_TAG), workInfos -> {
+            return new Event(System.currentTimeMillis(), workInfos);
+        });
     }
 
-    public LiveData<List<WorkInfo>> getSyncWorkInfoLiveData() {
+    public LiveData<Event> getSyncWorkInfoLiveData() {
         return syncWorkInfoLiveData;
     }
 

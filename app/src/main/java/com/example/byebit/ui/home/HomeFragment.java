@@ -79,8 +79,9 @@ public class HomeFragment extends Fragment implements MenuProvider {
         });
 
         // Observe WorkManager's status to control the SwipeRefreshLayout spinner
-        homeViewModel.getSyncWorkInfoLiveData().observe(getViewLifecycleOwner(), workInfos -> {
-            if (workInfos == null || workInfos.isEmpty()) {
+        Long callTimeMillis = System.currentTimeMillis();
+        homeViewModel.getSyncWorkInfoLiveData().observe(getViewLifecycleOwner(), event -> {
+            if (event.getWorkInfos() == null || event.getWorkInfos().isEmpty()) {
                 // No work scheduled yet or info not available.
                 // Could be initial state or after app restart if WorkManager hasn't reported yet.
                 // Ensure spinner is off initially or if no work is active.
@@ -89,7 +90,7 @@ public class HomeFragment extends Fragment implements MenuProvider {
             }
 
             // Get the first WorkInfo from the list (since we use unique work with REPLACE policy)
-            WorkInfo workInfo = workInfos.get(0);
+            WorkInfo workInfo = event.getWorkInfos().get(0);
             Log.d(TAG, "WorkInfo state for sync: " + workInfo.getState());
 
             boolean isRunning = workInfo.getState() == WorkInfo.State.RUNNING ||
@@ -98,7 +99,7 @@ public class HomeFragment extends Fragment implements MenuProvider {
             binding.swipeRefreshLayout.setRefreshing(isRunning); // Control the spinner visibility
 
             // Provide user feedback based on work state
-            if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+            if (workInfo.getState() == WorkInfo.State.SUCCEEDED && event.getTimeMillis() > callTimeMillis) {
                 Toast.makeText(requireContext(), "Transactions synced successfully! " + getLifecycle().getCurrentState().name(), Toast.LENGTH_SHORT).show();
             } else if (workInfo.getState() == WorkInfo.State.FAILED) {
                 Toast.makeText(requireContext(), "Transaction sync failed. Please try again.", Toast.LENGTH_LONG).show();
