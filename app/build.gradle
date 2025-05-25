@@ -64,6 +64,7 @@ dependencies {
     implementation libs.datastore.rxjava3
     implementation libs.work.runtime
     implementation libs.preference
+    implementation libs.swiperefreshlayout
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.2'
 

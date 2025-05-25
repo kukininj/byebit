@@ -18,8 +18,8 @@ public interface TransactionHandleDao {
     @Query("SELECT * FROM transactionhandle ORDER BY timestamp DESC")
     LiveData<List<TransactionHandle>> getAll();
 
-    @Query("SELECT * FROM transactionhandle WHERE walletOwnerId = :walletId ORDER BY timestamp DESC")
-    LiveData<List<TransactionHandle>> getByWalletOwnerId(UUID walletId);
+    @Query("SELECT * FROM transactionhandle WHERE walletId = :walletId ORDER BY timestamp DESC")
+    LiveData<List<TransactionHandle>> getByWalletId(UUID walletId);
 
     @Insert
     void insert(TransactionHandle transaction);

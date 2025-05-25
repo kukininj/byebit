@@ -26,6 +26,15 @@ public class TransactionRepository {
         this.databaseWriteExecutor = Executors.newFixedThreadPool(2);
     }
 
+    public void insertTransactionSync(TransactionHandle transaction) {
+        try {
+            transactionHandleDao.insert(transaction);
+            Log.d(TAG, "Inserted transaction: " + transaction.getId());
+        } catch (Exception e) {
+            Log.e(TAG, "Error inserting transaction", e);
+        }
+    }
+
     public void insertTransaction(TransactionHandle transaction) {
         databaseWriteExecutor.execute(() -> {
             try {
@@ -42,7 +51,7 @@ public class TransactionRepository {
     }
 
     public LiveData<List<TransactionHandle>> getTransactionsForWallet(UUID walletId) {
-        return transactionHandleDao.getByWalletOwnerId(walletId);
+        return transactionHandleDao.getByWalletId(walletId);
     }
 
     public void deleteTransaction(TransactionHandle transaction) {

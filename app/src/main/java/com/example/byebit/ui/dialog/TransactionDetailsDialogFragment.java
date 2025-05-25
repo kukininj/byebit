@@ -11,7 +11,7 @@ import com.example.byebit.R;
 
 public class TransactionDetailsDialogFragment extends DialogFragment {
 
-    private static final String ARG_TRANSACTION_ID = "transactionId";
+    private static final String ARG_TRANSACTION_HASH = "transactionId";
     private static final String ARG_TIMESTAMP = "timestamp";
     private static final String ARG_SENDER = "sender";
     private static final String ARG_RECEIVER = "receiver";
@@ -19,12 +19,12 @@ public class TransactionDetailsDialogFragment extends DialogFragment {
     private static final String ARG_FEE = "fee";
     private static final String ARG_BLOCKCHAIN = "blockchain";
 
-    public static TransactionDetailsDialogFragment newInstance(String transactionId, String timestamp,
+    public static TransactionDetailsDialogFragment newInstance(String transactionHash, String timestamp,
                                                                String sender, String receiver,
                                                                String amount, String fee, String blockchain) {
         TransactionDetailsDialogFragment fragment = new TransactionDetailsDialogFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_TRANSACTION_ID, transactionId);
+        args.putString(ARG_TRANSACTION_HASH, transactionHash);
         args.putString(ARG_TIMESTAMP, timestamp);
         args.putString(ARG_SENDER, sender);
         args.putString(ARG_RECEIVER, receiver);
@@ -42,7 +42,7 @@ public class TransactionDetailsDialogFragment extends DialogFragment {
         if (args == null) return super.onCreateDialog(savedInstanceState);
 
         String message =
-                "Transaction Id:\n" + args.getString(ARG_TRANSACTION_ID) + "\n\n" +
+                "Transaction Hash:\n" + args.getString(ARG_TRANSACTION_HASH) + "\n\n" +
                         "Timestamp:\n" + args.getString(ARG_TIMESTAMP) + "\n\n" +
                         "Sender Address:\n" + args.getString(ARG_SENDER) + "\n\n" +
                         "Receiver Address:\n" + args.getString(ARG_RECEIVER) + "\n\n" +

@@ -83,7 +83,7 @@ public class TransactionSyncWorker extends Worker {
                         for (EtherscanTransaction ethTx : etherscanTransactions) {
                             TransactionHandle transaction = mapEtherscanTransactionToHandle(ethTx, wallet);
                             if (transaction != null) {
-                                transactionRepository.insertTransaction(transaction);
+                                transactionRepository.insertTransactionSync(transaction);
                             }
                         }
                         Log.d(TAG, "Successfully synced " + etherscanTransactions.size() + " transactions for " + wallet.getAddress());

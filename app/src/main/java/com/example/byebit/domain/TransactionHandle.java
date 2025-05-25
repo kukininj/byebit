@@ -3,6 +3,7 @@ package com.example.byebit.domain;
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 import java.math.BigDecimal;
@@ -13,9 +14,10 @@ import java.util.UUID;
         foreignKeys = @ForeignKey(
                 entity = WalletHandle.class,
                 parentColumns = "id",
-                childColumns = "walletOwnerId",
+                childColumns = "walletId",
                 onDelete = ForeignKey.CASCADE
-        )
+        ),
+        indices = {@Index(value = {"hash"}, unique = true), @Index(value = {"walletId"})}
 )
 public class TransactionHandle {
 
@@ -33,7 +35,7 @@ public class TransactionHandle {
     private final String status; // "Pending", "Success", "Failure"
 
     @NonNull
-    private final UUID walletOwnerId;
+    private final UUID walletId;
 
     @NonNull
     private final String senderAddress;
@@ -55,7 +57,7 @@ public class TransactionHandle {
                              @NonNull String hash,
                              @NonNull String direction,
                              @NonNull String status,
-                             @NonNull UUID walletOwnerId,
+                             @NonNull UUID walletId,
                              @NonNull String senderAddress,
                              String receiverAddress,
                              @NonNull BigDecimal transactionAmount,
@@ -66,7 +68,7 @@ public class TransactionHandle {
         this.hash = hash;
         this.direction = direction;
         this.status = status;
-        this.walletOwnerId = walletOwnerId;
+        this.walletId = walletId;
         this.senderAddress = senderAddress;
         this.receiverAddress = receiverAddress;
         this.transactionAmount = transactionAmount;
@@ -92,8 +94,8 @@ public class TransactionHandle {
     }
 
     @NonNull
-    public UUID getWalletOwnerId() {
-        return walletOwnerId;
+    public UUID getWalletId() {
+        return walletId;
     }
 
     @NonNull
