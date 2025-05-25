@@ -18,6 +18,9 @@ public interface WalletHandleDao {
     @Query("select * from wallethandle ORDER BY name ASC") // Added ORDER BY for consistency
     LiveData<List<WalletHandle>> getAll();
 
+    @Query("SELECT * FROM WalletHandle")
+    List<WalletHandle> getAllWalletsSync(); // For background sync
+
     // Consider using @Insert(onConflict = OnConflictStrategy.REPLACE) if needed
     @Insert
     void insertAll(WalletHandle... handles);

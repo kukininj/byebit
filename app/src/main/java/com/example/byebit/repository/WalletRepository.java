@@ -216,4 +216,8 @@ public class WalletRepository {
             walletHandleDao.update(handle);
         });
     }
+
+    public List<WalletHandle> getAllWalletsSync() {
+        return walletHandleDao.getAllWalletsSync();
+    }
 }

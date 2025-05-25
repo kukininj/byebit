@@ -53,9 +53,17 @@ android {
 dependencies {
     implementation project(":contracts")
 
+    implementation 'androidx.datastore:datastore-preferences:1.1.7'
+    implementation "androidx.datastore:datastore-preferences-core:1.1.7"
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-jackson:2.9.0'
+    implementation 'org.jsoup:jsoup:1.17.2'
     implementation "androidx.room:room-runtime:2.7.1"
     implementation "org.web3j:core:4.12.3"
     implementation libs.biometric
+    implementation libs.datastore.rxjava3
+    implementation libs.work.runtime
+    implementation libs.preference
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.2'
 

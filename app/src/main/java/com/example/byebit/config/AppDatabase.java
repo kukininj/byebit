@@ -15,13 +15,13 @@ import com.example.byebit.domain.TransactionHandle;
 // ADDED: Import BigDecimalConverter
 import com.example.byebit.config.BigDecimalConverter;
 
-@Database(entities = {WalletHandle.class, TransactionHandle.class}, version = 6)
+@Database(entities = {WalletHandle.class, TransactionHandle.class}, version = 7)
 @TypeConverters({UuidConverter.class, BigDecimalConverter.class, InstantConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract WalletHandleDao getWalletHandleDao();
 
-    public abstract TransactionHandleDao getTransactionHandleDao(); // DODANE
+    public abstract TransactionHandleDao getTransactionHandleDao();
 
     private static volatile AppDatabase INSTANCE;
 

@@ -1,16 +1,25 @@
 package com.example.byebit.ui.home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.byebit.R;
 import com.example.byebit.adapter.TransactionAdapter;
 import com.example.byebit.config.AppDatabase;
 import com.example.byebit.dao.TransactionHandleDao;
@@ -18,11 +27,12 @@ import com.example.byebit.databinding.FragmentHomeBinding;
 import com.example.byebit.domain.TransactionHandle;
 import com.example.byebit.domain.GroupedTransaction;
 import com.example.byebit.ui.dialog.TransactionDetailsDialogFragment;
+import com.example.byebit.SettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements MenuProvider {
 
     private FragmentHomeBinding binding;
     private TransactionAdapter transactionAdapter;
@@ -38,6 +48,34 @@ public class HomeFragment extends Fragment {
         loadTransactions();
 
         return root;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        MenuHost menuHost = requireActivity();
+        menuHost.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.home_menu, menu);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        int id = menuItem.getItemId();
+
+        if (id == R.id.action_settings) {
+            // Launch the SettingsActivity
+            Intent intent = new Intent(this.getContext(), SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(menuItem);
     }
 
     private void setupRecyclerView() {

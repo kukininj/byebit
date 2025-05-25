@@ -24,6 +24,9 @@ public class TransactionHandle {
     private final UUID id;
 
     @NonNull
+    private final String hash;
+
+    @NonNull
     private final String direction; // "Send" or "Received"
 
     @NonNull
@@ -49,6 +52,7 @@ public class TransactionHandle {
 
     // --- Constructor ---
     public TransactionHandle(@NonNull UUID id,
+                             @NonNull String hash,
                              @NonNull String direction,
                              @NonNull String status,
                              @NonNull UUID walletOwnerId,
@@ -59,6 +63,7 @@ public class TransactionHandle {
                              String blockchainType,
                              @NonNull Instant timestamp) {
         this.id = id;
+        this.hash = hash;
         this.direction = direction;
         this.status = status;
         this.walletOwnerId = walletOwnerId;
@@ -126,5 +131,10 @@ public class TransactionHandle {
                 ", amount=" + transactionAmount +
                 ", timestamp=" + timestamp +
                 '}';
+    }
+
+    @NonNull
+    public String getHash() {
+        return hash;
     }
 }
