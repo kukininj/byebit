@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="API Keys">
+
+        <EditTextPreference
+            android:key="etherscan_api_key"
+            android:title="Etherscan API Key"
+            android:summary="Enter your Etherscan API key"
+            android:persistent="true"
+            android:inputType="textNoSuggestions"
+            android:singleLine="true" />
+
+    </PreferenceCategory>
+
+    <!-- You can add more categories and preferences here -->
+
+</PreferenceScreen>

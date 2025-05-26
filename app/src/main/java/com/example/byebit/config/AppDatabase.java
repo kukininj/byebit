@@ -8,15 +8,20 @@ import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
 import com.example.byebit.dao.WalletHandleDao;
+import com.example.byebit.dao.TransactionHandleDao;
 import com.example.byebit.domain.WalletHandle;
+import com.example.byebit.domain.TransactionHandle;
+
 // ADDED: Import BigDecimalConverter
 import com.example.byebit.config.BigDecimalConverter;
 
-@Database(entities = {WalletHandle.class}, version = 5)
-@TypeConverters({UuidConverter.class, BigDecimalConverter.class}) // MODIFIED: Add BigDecimalConverter
+@Database(entities = {WalletHandle.class, TransactionHandle.class}, version = 9)
+@TypeConverters({UuidConverter.class, BigDecimalConverter.class, InstantConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract WalletHandleDao getWalletHandleDao();
+
+    public abstract TransactionHandleDao getTransactionHandleDao();
 
     private static volatile AppDatabase INSTANCE;
 
@@ -26,7 +31,7 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "app_database")
-                            .fallbackToDestructiveMigration() // ADDED: Handle schema changes
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }
@@ -34,3 +39,4 @@ public abstract class AppDatabase extends RoomDatabase {
         return INSTANCE;
     }
 }
+

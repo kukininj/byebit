@@ -30,6 +30,8 @@ public class WalletHandle {
 
     private Long balanceLastUpdated;
 
+    private Long lastUpdateBlockNumber;
+
     private byte[] encryptedPassword;
 
     private byte[] iv;
@@ -99,5 +101,13 @@ public class WalletHandle {
 
     public void setIv(byte[] Iv) {
         this.iv = Iv;
+    }
+
+    public Long getLastUpdateBlockNumber() {
+        return lastUpdateBlockNumber;
+    }
+
+    public void setLastUpdateBlockNumber(Long lastUpdateBlockNumber) {
+        this.lastUpdateBlockNumber = lastUpdateBlockNumber;
     }
 }
