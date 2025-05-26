@@ -220,4 +220,10 @@ public class WalletRepository {
     public List<WalletHandle> getAllWalletsSync() {
         return walletHandleDao.getAllWalletsSync();
     }
+
+    public void updateWallet(WalletHandle wallet) {
+        databaseWriteExecutor.execute(() -> {
+            walletHandleDao.update(wallet);
+        });
+    }
 }

@@ -66,11 +66,12 @@ public class TransactionSyncWorker extends Worker {
         for (WalletHandle wallet : wallets) {
             Log.d(TAG, "Syncing transactions for wallet: " + wallet.getAddress());
             try {
-                long lastSyncedBlock = DEFAULT_START_BLOCK; // TODO: Implement persistent last synced block per wallet
+                long lastSyncedBlock = wallet.getLastUpdateBlockNumber() != null
+                        ? wallet.getLastUpdateBlockNumber() : DEFAULT_START_BLOCK;
 
                 Response<EtherscanApiResponse> response = etherscanApiService.getAccountTransactions(
                         wallet.getAddress(),
-                        lastSyncedBlock,
+                        lastSyncedBlock + 1,
                         99999999,
                         1,
                         PAGE_SIZE,
@@ -79,18 +80,42 @@ public class TransactionSyncWorker extends Worker {
 
                 if (response.isSuccessful() && response.body() != null && "1".equals(response.body().getStatus())) {
                     List<EtherscanTransaction> etherscanTransactions = response.body().getResult();
+                    Log.d(TAG, "request time: " + (response.raw().receivedResponseAtMillis() - response.raw().sentRequestAtMillis()));
                     if (etherscanTransactions != null) {
+                        long maxBlockNumber = lastSyncedBlock;
                         for (EtherscanTransaction ethTx : etherscanTransactions) {
                             TransactionHandle transaction = mapEtherscanTransactionToHandle(ethTx, wallet);
                             if (transaction != null) {
                                 transactionRepository.insertTransactionSync(transaction);
+                                try {
+                                    long blockNumber = Long.parseLong(ethTx.getBlockNumber());
+                                    if (blockNumber > maxBlockNumber) {
+                                        maxBlockNumber = blockNumber;
+                                    }
+                                } catch (NumberFormatException e) {
+                                    Log.e(TAG, "Error parsing block number for transaction: " + ethTx.getHash(), e);
+                                }
                             }
+                        }
+                        if (maxBlockNumber > lastSyncedBlock) {
+                            wallet.setLastUpdateBlockNumber(maxBlockNumber);
+                            walletRepository.updateWallet(wallet);
+                            Log.d(TAG, "Updated last synced block for " + wallet.getAddress() + " to " + maxBlockNumber);
                         }
                         Log.d(TAG, "Successfully synced " + etherscanTransactions.size() + " transactions for " + wallet.getAddress());
                     }
+                } else if (response.isSuccessful() && response.body() != null && "No transactions found".equals(response.body().getMessage())) {
+                    Log.d(TAG, "No new transactions for wallet: " + wallet.getAddress());
                 } else {
-                    Log.e(TAG, "Etherscan API error for " + wallet.getAddress() + ": " +
-                            (response.body() != null ? response.body().getMessage() : response.message()));
+                    Log.e(
+                            TAG,
+                            String.format(
+                                    "Etherscan API error %s for %s: %s",
+                                    response.code(),
+                                    wallet.getAddress(),
+                                    (response.body() != null ? response.body().getMessage() : response.message())
+                            )
+                    );
                     allWalletsSyncedSuccessfully = false;
                 }
             } catch (Exception e) {
@@ -131,8 +156,7 @@ public class TransactionSyncWorker extends Worker {
                 status = "Success";
             } else if ("0".equals(ethTx.getIsError()) && "0".equals(ethTx.getTxReceiptStatus())) {
                 status = "Success";
-            }
-            else {
+            } else {
                 status = "Failure";
             }
 

@@ -112,7 +112,7 @@ public class HomeFragment extends Fragment implements MenuProvider {
         // Observe transactions from the database (your existing data loading)
         // This will update the UI whenever data changes in the DB, whether by sync or other means.
         TransactionHandleDao dao = AppDatabase.getDatabase(requireContext()).getTransactionHandleDao();
-        dao.getAll().observe(getViewLifecycleOwner(), transactions -> {
+        dao.getAllTransactionsWithWallet().observe(getViewLifecycleOwner(), transactions -> {
             if (transactions != null) {
                 // Assuming GroupedTransaction and its static method exist
                 List<GroupedTransaction> grouped = GroupedTransaction.groupTransactionsByDate(transactions);

@@ -6,8 +6,10 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 import androidx.room.Delete;
+import androidx.room.OnConflictStrategy;
 
 import com.example.byebit.domain.TransactionHandle;
+import com.example.byebit.domain.TransactionWithWallet;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +23,7 @@ public interface TransactionHandleDao {
     @Query("SELECT * FROM transactionhandle WHERE walletId = :walletId ORDER BY timestamp DESC")
     LiveData<List<TransactionHandle>> getByWalletId(UUID walletId);
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insert(TransactionHandle transaction);
 
     @Update
@@ -29,4 +31,7 @@ public interface TransactionHandleDao {
 
     @Delete
     void delete(TransactionHandle transaction);
+
+    @Query("SELECT * FROM transactionhandle")
+    LiveData<List<TransactionWithWallet>> getAllTransactionsWithWallet();
 }

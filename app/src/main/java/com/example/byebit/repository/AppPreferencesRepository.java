@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import androidx.preference.PreferenceManager;
+
 public class AppPreferencesRepository {
 
     private static final String TAG = "AppPreferencesRepo";
@@ -14,7 +16,7 @@ public class AppPreferencesRepository {
     private final SharedPreferences sharedPreferences;
 
     private AppPreferencesRepository(Context context) {
-        this.sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     public static AppPreferencesRepository getInstance(Context context) {
@@ -35,6 +37,7 @@ public class AppPreferencesRepository {
      * @return The API key string, or null if not found.
      */
     public String getEtherscanApiKey() {
+
         // SharedPreferences.getString(key, defaultValue)
         // We'll return null if not found, as an empty string might be a valid key.
         return sharedPreferences.getString(KEY_ETHERSCAN_API_KEY, null);

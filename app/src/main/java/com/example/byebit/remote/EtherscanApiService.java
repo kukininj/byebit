@@ -18,13 +18,4 @@ public interface EtherscanApiService {
             @Query("apikey") String apikey // Key will be passed from Worker
     );
 
-    @GET("?module=account&action=tokentx&sort=desc")
-    Call<EtherscanApiResponse> getAccountErc20TokenTransfers(
-            @Query("address") String address,
-            @Query("startblock") long startBlock,
-            @Query("endblock") long endBlock,
-            @Query("page") int page,
-            @Query("offset") int offset,
-            @Query("apikey") String apikey // Key will be passed from Worker
-    );
 }

@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.byebit.R;
 import com.example.byebit.domain.GroupedTransaction;
 import com.example.byebit.domain.TransactionHandle;
+import com.example.byebit.domain.TransactionWithWallet;
+import com.example.byebit.domain.WalletHandle;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,7 +29,40 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int VIEW_TYPE_DATE_HEADER = 0;
     private static final int VIEW_TYPE_TRANSACTION = 1;
 
-    private final List<Object> items = new ArrayList<>();
+    // --- New: Define interface for list items ---
+    public interface ListItem {}
+
+    // --- New: Wrapper class for Date Header ---
+    public static class DateHeaderItem implements ListItem {
+        private final String dateLabel;
+
+        public DateHeaderItem(String dateLabel) {
+            this.dateLabel = dateLabel;
+        }
+
+        public String getDateLabel() {
+            return dateLabel;
+        }
+    }
+
+    // --- New: Wrapper class for Transaction ---
+    public static class TransactionItem implements ListItem {
+        private final TransactionHandle transaction;
+        private final WalletHandle walletHandle;
+
+        public TransactionItem(TransactionHandle transaction, WalletHandle walletHandle) {
+            this.transaction = transaction;
+            this.walletHandle = walletHandle;
+        }
+
+        public TransactionHandle getTransaction() {
+            return transaction;
+        }
+    }
+    // --- End of new classes ---
+
+
+    private final List<ListItem> items = new ArrayList<>(); // Changed to List<ListItem>
     private final OnTransactionDetailsClickListener detailsClickListener;
 
     public interface OnTransactionDetailsClickListener {
@@ -42,15 +77,19 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void setGroupedTransactions(List<GroupedTransaction> groupedList) {
         items.clear();
         for (GroupedTransaction group : groupedList) {
-            items.add(group.getDateLabel());
-            items.addAll(group.getTransactions());
+            items.add(new DateHeaderItem(group.date)); // Wrap String in DateHeaderItem
+            for (TransactionWithWallet result : group.transactions) {
+                items.add(new TransactionItem(result.transaction, result.wallet)); // Wrap TransactionHandle in TransactionItem
+            }
         }
         notifyDataSetChanged();
     }
 
     @Override
     public int getItemViewType(int position) {
-        return items.get(position) instanceof String ? VIEW_TYPE_DATE_HEADER : VIEW_TYPE_TRANSACTION;
+        // Check the type of the ListItem to determine the view type
+        ListItem item = items.get(position);
+        return item instanceof DateHeaderItem ? VIEW_TYPE_DATE_HEADER : VIEW_TYPE_TRANSACTION;
     }
 
     @Override
@@ -66,7 +105,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (viewType == VIEW_TYPE_DATE_HEADER) {
             View view = inflater.inflate(R.layout.item_date_header, parent, false);
             return new DateHeaderViewHolder(view);
-        } else {
+        } else { // VIEW_TYPE_TRANSACTION
             View view = inflater.inflate(R.layout.transaction_list_item, parent, false);
             return new TransactionViewHolder(view);
         }
@@ -74,13 +113,19 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        ListItem item = items.get(position); // Get the ListItem
+
         if (holder instanceof DateHeaderViewHolder) {
-            ((DateHeaderViewHolder) holder).bind((String) items.get(position));
-        } else {
-            ((TransactionViewHolder) holder).bind((TransactionHandle) items.get(position));
+            DateHeaderItem dateHeaderItem = (DateHeaderItem) item; // Cast to DateHeaderItem
+            ((DateHeaderViewHolder) holder).bind(dateHeaderItem.getDateLabel()); // Unwrap and bind
+        } else if (holder instanceof TransactionViewHolder ) { // It must be a TransactionViewHolder
+            TransactionItem transactionItem = (TransactionItem) item; // Cast to TransactionItem
+            ((TransactionViewHolder) holder).bind(transactionItem.getTransaction(), transactionItem.walletHandle); // Unwrap and bind
         }
     }
 
+    // DateHeaderViewHolder and TransactionViewHolder remain largely the same,
+    // as their bind methods still expect String and TransactionHandle respectively.
     static class DateHeaderViewHolder extends RecyclerView.ViewHolder {
         private final TextView dateText;
 
@@ -101,6 +146,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         private final TextView amountText;
         private final TextView timeText;
         private final Button detailsButton;
+        private final TextView walletNameText; // This field was defined but not used in original code, keeping it for consistency
 
         public TransactionViewHolder(View itemView) {
             super(itemView);
@@ -110,9 +156,10 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             amountText = itemView.findViewById(R.id.text_amount);
             timeText = itemView.findViewById(R.id.text_time);
             detailsButton = itemView.findViewById(R.id.button_details);
+            walletNameText = itemView.findViewById(R.id.text_wallet_name); // keeping for consistency
         }
 
-        public void bind(TransactionHandle tx) {
+        public void bind(TransactionHandle tx, WalletHandle wallet) {
             directionText.setText(tx.getDirection());
             directionText.setTypeface(null, Typeface.BOLD);
 
@@ -141,12 +188,16 @@ public class TransactionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             timeText.setText(formatTime(tx.getTimestamp().toEpochMilli()));
+            walletNameText.setText(wallet.getName());
 
             detailsButton.setOnClickListener(v -> {
                 if (detailsClickListener != null) {
                     detailsClickListener.onDetailsClick(tx);
                 }
             });
+            // The walletName TextView was found but not used in the original bind method.
+            // If it's intended to display wallet name, you would add:
+            // walletName.setText(tx.getWalletName()); // Assuming TransactionHandle has getWalletName()
         }
     }
 
