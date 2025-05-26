@@ -5,6 +5,7 @@ import android.util.Log; // Import Log
 
 import com.example.byebit.R; // Import R to access resources
 import com.example.byebit.config.AppDatabase;
+import com.example.byebit.dao.TransactionHandleDao;
 import com.example.byebit.dao.WalletHandleDao;
 
 import androidx.annotation.Nullable;
@@ -43,12 +44,14 @@ public class WalletRepository {
     private static final String TAG = "WalletRepository"; // Add a TAG for logging
 
     private final WalletHandleDao walletHandleDao;
+    private final TransactionHandleDao transactionHandleDao;
     private final File walletsDir;
     private final ExecutorService databaseWriteExecutor; // Executor for database operations
     private final Web3j web3j; // Add Web3j instance
 
     public WalletRepository(Context context) {
         this.walletHandleDao = AppDatabase.getDatabase(context).getWalletHandleDao();
+        this.transactionHandleDao = AppDatabase.getDatabase(context).getTransactionHandleDao();
         this.walletsDir = context.getFilesDir();
         // Initialize the executor service
         databaseWriteExecutor = Executors.newFixedThreadPool(4); // Use a small pool for DB writes
@@ -184,7 +187,11 @@ public class WalletRepository {
                     Log.w(TAG, "Wallet file not found, cannot delete from filesystem: " + walletFile.getAbsolutePath());
                 }
 
-                // 2. Delete the WalletHandle entry from the database
+                // 2. Delete associated transactions from the database
+                transactionHandleDao.deleteByWalletId(wallet.getId());
+                Log.d(TAG, "Successfully deleted transactions for wallet: " + wallet.getName() + " (ID: " + wallet.getId() + ")");
+
+                // 3. Delete the WalletHandle entry from the database
                 walletHandleDao.delete(wallet);
                 Log.d(TAG, "Successfully deleted wallet from database: " + wallet.getName() + " (Address: " + wallet.getAddress() + ")");
                 // The LiveData in DashboardViewModel will automatically update the UI.

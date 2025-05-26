@@ -34,4 +34,7 @@ public interface TransactionHandleDao {
 
     @Query("SELECT * FROM transactionhandle")
     LiveData<List<TransactionWithWallet>> getAllTransactionsWithWallet();
+
+    @Query("DELETE FROM transactionhandle WHERE walletId = :walletId")
+    void deleteByWalletId(UUID walletId);
 }
