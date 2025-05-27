@@ -32,6 +32,7 @@ public class SignatureProvider extends ContentProvider {
     public static final String KEY_MESSAGE_TO_SIGN = "message_to_sign";
     public static final String KEY_REQUEST_ID = "request_id"; // To link initial request to confirmation
     public static final String KEY_IS_CONFIRMED = "is_confirmed"; // From confirmation activity
+    public static final String KEY_SELECTED_WALLET_ID = "selected_wallet_id"; // From confirmation activity
     public static final String KEY_CLIENT_CALLBACK_PENDING_INTENT = "client_callback_pending_intent"; // Provided by the calling app
 
     // A temporary store for pending signing requests, keyed by request ID.
@@ -133,6 +134,7 @@ public class SignatureProvider extends ContentProvider {
 
             String requestId = extras.getString(KEY_REQUEST_ID);
             boolean isConfirmed = extras.getBoolean(KEY_IS_CONFIRMED);
+            String selectedWalletId = extras.getString(KEY_SELECTED_WALLET_ID);
 
             PendingRequestData requestData = pendingRequests.remove(requestId); // Remove once processed
             if (requestData == null) {
@@ -147,7 +149,7 @@ public class SignatureProvider extends ContentProvider {
                 Intent clientResultIntent = new Intent();
                 if (isConfirmed) {
                     // Perform the actual signing operation securely here
-                    byte[] signature = simulateSigning(originalMessage); // Replace with real signing
+                    byte[] signature = simulateSigning(originalMessage, selectedWalletId); // Replace with real signing
 
                     clientResultIntent.putExtra(KEY_SIGNATURE_RESULT, signature);
                     Log.d("SignatureProvider", "Message signed for requestId: " + requestId);
@@ -179,8 +181,8 @@ public class SignatureProvider extends ContentProvider {
     }
 
     // Placeholder for actual signing logic (do NOT use in production)
-    private byte[] simulateSigning(byte[] message) {
-        String simulatedSig = "SIMULATED_SIGNATURE_FOR_" + new String(message) + "_CONFIRMED";
+    private byte[] simulateSigning(byte[] message, String selectedWalletId) {
+        String simulatedSig = "SIMULATED_SIGNATURE_FOR_" + new String(message) + "_FROM_WALLET_" + selectedWalletId + "_CONFIRMED";
         return simulatedSig.getBytes();
     }
 }
