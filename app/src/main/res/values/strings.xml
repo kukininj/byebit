@@ -93,4 +93,9 @@
     <string name="create_transaction_send_success">Successfully sent</string>
     <string name="create_transaction_send_failure">Couldn\'t send transaction</string>
 
+
+
+    <string name="permission_description_sign_message">Permission to request signing</string>
+    <string name="permission_label_sign_message">permission_label_sign_message</string>
+
 </resources>

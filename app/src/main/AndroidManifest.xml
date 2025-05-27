@@ -5,6 +5,13 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
+    <permission
+        android:name="com.example.byebit.permission.SIGN_MESSAGE"
+        android:protectionLevel="signature"
+        android:description="@string/permission_description_sign_message"
+        android:label="@string/permission_label_sign_message" />
+
+
     <application
         android:name=".ByeBitApplication"
         android:allowBackup="true"
@@ -33,6 +40,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".provider.SignatureProvider"
+            android:authorities="com.example.byebit.signatureprovider"
+            android:exported="true"
+            android:permission="com.example.byebit.permission.SIGN_MESSAGE"
+            />
+
+        <activity
+            android:name=".SignatureConfirmActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:enableOnBackInvokedCallback="true"
+            />
     </application>
 
     <queries>
