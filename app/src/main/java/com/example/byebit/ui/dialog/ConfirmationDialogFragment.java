@@ -12,20 +12,23 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.LiveData;
 
 // Inside your app that performs the signing
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 import com.example.byebit.domain.WalletHandle;
-import java.util.ArrayList;
+
 import java.util.List;
 
 import android.widget.AdapterView;
 
 
 public class ConfirmationDialogFragment extends DialogFragment {
+
+    private Spinner walletSpinner;
+    private TextView messageTextView;
+    private View view;
 
     public interface ConfirmationDialogListener {
         void onUserConfirmation(boolean confirmed, String selectedWalletId);
@@ -36,7 +39,7 @@ public class ConfirmationDialogFragment extends DialogFragment {
 
     private ConfirmationDialogListener listener;
     private WalletHandle selectedWallet;
-    private LiveData<List<WalletHandle>> walletHandles;
+    private LiveData<List<WalletHandle>> walletHandlesLiveData;
 
     private ArrayAdapter<String> adapter;
 
@@ -44,7 +47,7 @@ public class ConfirmationDialogFragment extends DialogFragment {
         ConfirmationDialogFragment fragment = new ConfirmationDialogFragment();
         Bundle args = new Bundle();
         args.putByteArray(ARG_MESSAGE, message);
-        fragment.walletHandles = walletHandles;
+        fragment.walletHandlesLiveData = walletHandles;
         fragment.setArguments(args);
         return fragment;
     }
@@ -68,9 +71,10 @@ public class ConfirmationDialogFragment extends DialogFragment {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View view = inflater.inflate(com.example.byebit.R.layout.dialog_confirm_signing, null);
-        TextView messageTextView = view.findViewById(com.example.byebit.R.id.message_preview_text_view);
-        Spinner walletSpinner = view.findViewById(com.example.byebit.R.id.wallet_spinner);
+        view = inflater.inflate(com.example.byebit.R.layout.dialog_confirm_signing, null);
+        messageTextView = view.findViewById(com.example.byebit.R.id.message_preview_text_view);
+        walletSpinner = view.findViewById(com.example.byebit.R.id.wallet_spinner);
+
 
         messageTextView.setText(messagePreview);
 
@@ -80,11 +84,10 @@ public class ConfirmationDialogFragment extends DialogFragment {
 
         walletSpinner.setAdapter(adapter);
 
-
         walletSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedWallet = walletHandles.get(position);
+                selectedWallet = walletHandlesLiveData.getValue().get(position);
             }
 
             @Override
@@ -93,9 +96,20 @@ public class ConfirmationDialogFragment extends DialogFragment {
             }
         });
 
-        selectedWallet = walletHandles.get(0); // Select the first wallet by default
-        walletHandles.observe(getViewLifecycleOwner(), walletHandles -> {
+        walletHandlesLiveData.observe(this, walletHandles -> {
+            if (walletHandles != null && !walletHandles.isEmpty()) {
+                walletHandles.stream()
+                        .map(WalletHandle::getName)
+                        .forEach(adapter::add);
+            } else {
+                // No wallets available, disable sign button and show a message
+                walletSpinner.setVisibility(View.GONE);
+                view.findViewById(com.example.byebit.R.id.wallet_selection_label).setVisibility(View.GONE);
+                messageTextView.setText("No wallets available to sign with.");
+            }
         });
+
+        selectedWallet = null; // Select the first wallet by default
 
         builder.setView(view)
                 .setTitle("Confirm Message Signing")
@@ -110,35 +124,6 @@ public class ConfirmationDialogFragment extends DialogFragment {
                     }
                 });
         return builder.create();
-    }
-
-    @Nullable
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        walletHandles.observe(getViewLifecycleOwner(), walletHandles -> {
-            if (walletHandles != null && !walletHandles.isEmpty()) {
-                walletHandles.stream()
-                        .map(WalletHandle::getName)
-                        .forEach(adapter::add);
-            } else {
-                // No wallets available, disable sign button and show a message
-                walletSpinner.setVisibility(View.GONE);
-                view.findViewById(com.example.byebit.R.id.wallet_selection_label).setVisibility(View.GONE);
-                messageTextView.setText("No wallets available to sign with.");
-                builder.setPositiveButton("OK", (dialog, id) -> {
-                    if (listener != null) {
-                        listener.onUserConfirmation(false, null);
-                    }
-                });
-                builder.setNegativeButton("Cancel", (dialog, id) -> {
-                    if (listener != null) {
-                        listener.onUserConfirmation(false, null);
-                    }
-                });
-            }
-        });
     }
 
     @Override

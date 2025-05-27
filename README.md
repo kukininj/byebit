@@ -9,3 +9,16 @@ link został znaleziony w liście dostępnej na: https://chainlist.org/chain/111
 
 ### Testnet Sepolia
 Informacje o wykorzystanym testnecie są dostępne na: https://sepolia.etherscan.io/
+
+
+# Podpisywanie wiadomości
+
+Przygotowano contet provider umożliwiający innym aplikacjom podpisanie wiadomości kluczem prywatnym zapisanym w aplikacji.
+
+## Zasada działania
+
+...
+
+## Weryfikacja podpisu
+
+https://etherscan.io/verifiedsignatures#
