@@ -24,10 +24,10 @@
     </fragment>
 
     <fragment
-        android:id="@+id/navigation_notifications"
-        android:name="com.example.byebit.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
+        android:id="@+id/navigation_create_transaction"
+        android:name="com.example.byebit.ui.createtransaction.CreateTransactionFragment"
+        android:label="@string/title_create_transaction"
+        tools:layout="@layout/fragment_create_transaction" />
 
     <!-- New fragment for creating a wallet -->
     <fragment
