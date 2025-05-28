@@ -2,7 +2,7 @@
     <string name="app_name">ByeBit</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_create_transaction">Create transaction</string>
 
     <!-- New strings for wallet creation -->
     <string name="title_create_wallet">Create New Wallet</string>
@@ -25,7 +25,7 @@
     <string name="details_button_text">Details</string>
 
     <!-- Sepolia RPC URL -->
-    <string name="sepolia_rpc_url">https://sepolia.drpc.org</string>
+    <string name="sepolia_rpc_url">"https://sepolia.drpc.org"</string>
 
     <!-- Strings for wallet deletion -->
     <string name="delete_wallet_dialog_title">Delete Wallet</string>
@@ -85,5 +85,12 @@
     <string name="direction_icon">Direction Icon</string>
     <string name="send">Send</string>
     <string name="success">Success</string>
+    <string name="create_transaction_from">From</string>
+    <string name="create_transaction_to">To</string>
+    <string name="create_transaction_amount">Amount</string>
+    <string name="create_transaction_button">Send</string>
+    <string name="create_transaction_sending">Sending transaction...</string>
+    <string name="create_transaction_send_success">Successfully sent</string>
+    <string name="create_transaction_send_failure">Couldn\'t send transaction</string>
 
 </resources>

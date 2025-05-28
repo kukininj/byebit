@@ -20,6 +20,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.byebit.R;
+import com.example.byebit.domain.WalletHandle;
 import com.example.byebit.security.AuthenticationFailureReason;
 import com.example.byebit.security.AuthenticationListener;
 import com.example.byebit.security.BiometricService;
@@ -61,6 +62,10 @@ public class WalletUnlockDialogFragment extends DialogFragment {
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     private AlertDialog dialog; // To control the dialog content dynamically
+
+    public static WalletUnlockDialogFragment newInstance(@NonNull WalletHandle wallet) {
+        return newInstance(wallet.getName(), wallet.getEncryptedPassword(), wallet.getIv());
+    }
 
     public static WalletUnlockDialogFragment newInstance(@NonNull String walletName, @Nullable byte[] encryptedPassword, @Nullable byte[] iv) {
         WalletUnlockDialogFragment fragment = new WalletUnlockDialogFragment();
