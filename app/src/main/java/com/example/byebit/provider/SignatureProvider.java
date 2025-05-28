@@ -33,6 +33,7 @@ public class SignatureProvider extends ContentProvider {
     public static final String KEY_REQUEST_ID = "request_id"; // To link initial request to confirmation
     public static final String KEY_IS_CONFIRMED = "is_confirmed"; // From confirmation activity
     public static final String KEY_SELECTED_WALLET_ID = "selected_wallet_id"; // From confirmation activity
+    public static final String KEY_SIGNATURE = "signature"; // From confirmation activity
     public static final String KEY_CLIENT_CALLBACK_PENDING_INTENT = "client_callback_pending_intent"; // Provided by the calling app
 
     // A temporary store for pending signing requests, keyed by request ID.
@@ -43,11 +44,16 @@ public class SignatureProvider extends ContentProvider {
 
     private static class PendingRequestData {
         byte[] messageToSign;
+        byte[] signature;
         PendingIntent clientCallbackPendingIntent;
 
         PendingRequestData(byte[] messageToSign, PendingIntent clientCallbackPendingIntent) {
             this.messageToSign = messageToSign;
             this.clientCallbackPendingIntent = clientCallbackPendingIntent;
+        }
+
+        public void setSignature(byte[] signature) {
+            this.signature = signature;
         }
     }
 

@@ -12,11 +12,13 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.LiveData;
 
 // Inside your app that performs the signing
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
+
 import com.example.byebit.domain.WalletHandle;
 
 import java.util.List;
@@ -31,7 +33,7 @@ public class ConfirmationDialogFragment extends DialogFragment {
     private View view;
 
     public interface ConfirmationDialogListener {
-        void onUserConfirmation(boolean confirmed, String selectedWalletId);
+        void onUserConfirmation(boolean confirmed, String selectedWalletId, byte[] signature);
     }
 
     private static final String ARG_MESSAGE = "message_to_display";
@@ -114,13 +116,15 @@ public class ConfirmationDialogFragment extends DialogFragment {
         builder.setView(view)
                 .setTitle("Confirm Message Signing")
                 .setPositiveButton("Sign", (dialog, id) -> {
-                    if (listener != null) {
-                        listener.onUserConfirmation(true, selectedWallet != null ? selectedWallet.getId().toString() : null);
+                    if (listener != null && selectedWallet != null) {
+                        listener.onUserConfirmation(true, selectedWallet.getId().toString(), null);
+                    } else {
+                        Log.e("ConfirmationDialogFragment", "listener or selected wallet null, listener:" + listener.toString() + " wallet=" + selectedWallet.getAddress());
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, id) -> {
                     if (listener != null) {
-                        listener.onUserConfirmation(false, null);
+                        listener.onUserConfirmation(false, null, null);
                     }
                 });
         return builder.create();
@@ -131,7 +135,7 @@ public class ConfirmationDialogFragment extends DialogFragment {
         super.onCancel(dialog);
         // User dismissed dialog (e.g., back button)
         if (listener != null) {
-            listener.onUserConfirmation(false, null);
+            listener.onUserConfirmation(false, null, null);
         }
     }
 }

@@ -13,7 +13,6 @@ import com.example.byebit.provider.SignatureProvider;
 import com.example.byebit.repository.WalletRepository;
 import com.example.byebit.ui.dialog.ConfirmationDialogFragment;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SignatureConfirmActivity extends AppCompatActivity implements ConfirmationDialogFragment.ConfirmationDialogListener {
@@ -49,12 +48,13 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
     }
 
     @Override
-    public void onUserConfirmation(boolean confirmed, String selectedWalletId) {
+    public void onUserConfirmation(boolean confirmed, String selectedWalletId, byte[] signature) {
         ContentResolver contentResolver = getContentResolver();
         Bundle extras = new Bundle();
         extras.putString(SignatureProvider.KEY_REQUEST_ID, requestId);
         extras.putBoolean(SignatureProvider.KEY_IS_CONFIRMED, confirmed);
         extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ID, selectedWalletId);
+        extras.putByteArray(SignatureProvider.KEY_SIGNATURE, signature);
 
         try {
             contentResolver.call(
