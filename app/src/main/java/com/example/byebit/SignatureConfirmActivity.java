@@ -12,14 +12,19 @@ import com.example.byebit.domain.WalletHandle;
 import com.example.byebit.provider.SignatureProvider;
 import com.example.byebit.repository.WalletRepository;
 import com.example.byebit.ui.dialog.ConfirmationDialogFragment;
+import com.example.byebit.ui.dialog.WalletUnlockDialogFragment;
 
 import java.util.List;
+
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class SignatureConfirmActivity extends AppCompatActivity implements ConfirmationDialogFragment.ConfirmationDialogListener {
 
     private String requestId;
     private byte[] messageToSign;
     private WalletRepository walletRepository;
+    private CompositeDisposable disposables = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +44,7 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
                 LiveData<List<WalletHandle>> walletHandles = walletRepository.getSavedWallets();
 
                 ConfirmationDialogFragment dialogFragment = ConfirmationDialogFragment.newInstance(messageToSign, walletHandles);
+
                 dialogFragment.show(getSupportFragmentManager(), "ConfirmationDialog");
             }
         } else {
@@ -48,29 +54,53 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
     }
 
     @Override
-    public void onUserConfirmation(boolean confirmed, String selectedWalletId, byte[] signature) {
+    public void onUserConfirmation(boolean confirmed, WalletHandle selectedWallet) {
         ContentResolver contentResolver = getContentResolver();
-        Bundle extras = new Bundle();
-        extras.putString(SignatureProvider.KEY_REQUEST_ID, requestId);
-        extras.putBoolean(SignatureProvider.KEY_IS_CONFIRMED, confirmed);
-        extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ID, selectedWalletId);
-        extras.putByteArray(SignatureProvider.KEY_SIGNATURE, signature);
+        byte[] signature = null;
 
-        try {
-            contentResolver.call(
-                    SignatureProvider.BASE_URI,
-                    SignatureProvider.METHOD_CONFIRM_SIGNING_RESULT,
-                    null,
-                    extras
+        if (confirmed) {
+            WalletUnlockDialogFragment fragment = WalletUnlockDialogFragment.newInstance(selectedWallet);
+
+            disposables.add(
+                    fragment.getDialogEvents()
+                            .observeOn(Schedulers.io())
+                            .subscribe(result -> {
+                                if (result.isSuccess()) {
+                                    walletRepository.getCredentials(
+                                            selectedWallet,
+                                            result.password
+                                    );
+                                }
+                            })
             );
-        } catch (SecurityException e) {
-            Log.e("SignatureConfirmActivity", "Permission denied to call back to provider: " + e.getMessage());
-        } catch (Exception e) {
-            Log.e("SignatureConfirmActivity", "Error calling provider callback: " + e.getMessage());
+
+
+            fragment.show(getSupportFragmentManager(), "WalletUnlockDialogFragment");
+        } else {
+            Bundle extras = new Bundle();
+            extras.putString(SignatureProvider.KEY_REQUEST_ID, requestId);
+            extras.putBoolean(SignatureProvider.KEY_IS_CONFIRMED, confirmed);
+            extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ADDRESS, selectedWallet.getAddress());
+            extras.putByteArray(SignatureProvider.KEY_SIGNATURE, signature);
+
+            try {
+                contentResolver.call(
+                        SignatureProvider.BASE_URI,
+                        SignatureProvider.METHOD_CONFIRM_SIGNING_RESULT,
+                        null,
+                        extras
+                );
+            } catch (SecurityException e) {
+                Log.e("SignatureConfirmActivity", "Permission denied to call back to provider: " + e.getMessage());
+            } catch (Exception e) {
+                Log.e("SignatureConfirmActivity", "Error calling provider callback: " + e.getMessage());
+            }
         }
 
         finish();
     }
+
+
 
     @Override
     protected void onDestroy() {

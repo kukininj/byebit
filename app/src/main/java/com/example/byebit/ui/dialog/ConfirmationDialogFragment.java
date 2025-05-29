@@ -24,6 +24,7 @@ import com.example.byebit.domain.WalletHandle;
 import java.util.List;
 
 import android.widget.AdapterView;
+import android.widget.Toast;
 
 
 public class ConfirmationDialogFragment extends DialogFragment {
@@ -33,7 +34,7 @@ public class ConfirmationDialogFragment extends DialogFragment {
     private View view;
 
     public interface ConfirmationDialogListener {
-        void onUserConfirmation(boolean confirmed, String selectedWalletId, byte[] signature);
+        void onUserConfirmation(boolean confirmed, WalletHandle selectedWallet);
     }
 
     private static final String ARG_MESSAGE = "message_to_display";
@@ -42,7 +43,6 @@ public class ConfirmationDialogFragment extends DialogFragment {
     private ConfirmationDialogListener listener;
     private WalletHandle selectedWallet;
     private LiveData<List<WalletHandle>> walletHandlesLiveData;
-
     private ArrayAdapter<String> adapter;
 
     public static ConfirmationDialogFragment newInstance(byte[] message, LiveData<List<WalletHandle>> walletHandles) {
@@ -76,7 +76,6 @@ public class ConfirmationDialogFragment extends DialogFragment {
         view = inflater.inflate(com.example.byebit.R.layout.dialog_confirm_signing, null);
         messageTextView = view.findViewById(com.example.byebit.R.id.message_preview_text_view);
         walletSpinner = view.findViewById(com.example.byebit.R.id.wallet_spinner);
-
 
         messageTextView.setText(messagePreview);
 
@@ -117,14 +116,15 @@ public class ConfirmationDialogFragment extends DialogFragment {
                 .setTitle("Confirm Message Signing")
                 .setPositiveButton("Sign", (dialog, id) -> {
                     if (listener != null && selectedWallet != null) {
-                        listener.onUserConfirmation(true, selectedWallet.getId().toString(), null);
+                        listener.onUserConfirmation(true, selectedWallet);
                     } else {
                         Log.e("ConfirmationDialogFragment", "listener or selected wallet null, listener:" + listener.toString() + " wallet=" + selectedWallet.getAddress());
+                        dialog.cancel();
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, id) -> {
                     if (listener != null) {
-                        listener.onUserConfirmation(false, null, null);
+                        listener.onUserConfirmation(false, null);
                     }
                 });
         return builder.create();
@@ -133,9 +133,10 @@ public class ConfirmationDialogFragment extends DialogFragment {
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
+        Toast.makeText(getContext(), "Something went wrong, canceling.", Toast.LENGTH_SHORT).show();
         // User dismissed dialog (e.g., back button)
         if (listener != null) {
-            listener.onUserConfirmation(false, null, null);
+            listener.onUserConfirmation(false, null);
         }
     }
 }

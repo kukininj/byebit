@@ -32,7 +32,7 @@ public class SignatureProvider extends ContentProvider {
     public static final String KEY_MESSAGE_TO_SIGN = "message_to_sign";
     public static final String KEY_REQUEST_ID = "request_id"; // To link initial request to confirmation
     public static final String KEY_IS_CONFIRMED = "is_confirmed"; // From confirmation activity
-    public static final String KEY_SELECTED_WALLET_ID = "selected_wallet_id"; // From confirmation activity
+    public static final String KEY_SELECTED_WALLET_ADDRESS = "selected_wallet_address"; // From confirmation activity
     public static final String KEY_SIGNATURE = "signature"; // From confirmation activity
     public static final String KEY_CLIENT_CALLBACK_PENDING_INTENT = "client_callback_pending_intent"; // Provided by the calling app
 
@@ -140,7 +140,7 @@ public class SignatureProvider extends ContentProvider {
 
             String requestId = extras.getString(KEY_REQUEST_ID);
             boolean isConfirmed = extras.getBoolean(KEY_IS_CONFIRMED);
-            String selectedWalletId = extras.getString(KEY_SELECTED_WALLET_ID);
+            String selectedWalletId = extras.getString(KEY_SELECTED_WALLET_ADDRESS);
 
             PendingRequestData requestData = pendingRequests.remove(requestId); // Remove once processed
             if (requestData == null) {
