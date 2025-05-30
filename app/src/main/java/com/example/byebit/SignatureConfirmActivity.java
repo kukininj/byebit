@@ -71,11 +71,11 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
             disposables.add(
                     fragment.getDialogEvents()
                             .observeOn(Schedulers.io())
+//                            .observeOn(Schedulers.from(getMainExecutor()))
                             .subscribe(result -> {
                                 this.handlePasswordDialogResult(result, selectedWallet);
                             })
             );
-
 
             fragment.show(getSupportFragmentManager(), "WalletUnlockDialogFragment");
         } else {
@@ -85,7 +85,7 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
             extras.putString(SignatureProvider.KEY_REQUEST_ID, requestId);
             extras.putBoolean(SignatureProvider.KEY_IS_CONFIRMED, confirmed);
             extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ADDRESS, null);
-            extras.putByteArray(SignatureProvider.KEY_SIGNATURE, null);
+            extras.putString(SignatureProvider.KEY_SIGNATURE, null);
 
             try {
                 contentResolver.call(
@@ -99,9 +99,9 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
             } catch (Exception e) {
                 Log.e("SignatureConfirmActivity", "Error calling provider callback: " + e.getMessage());
             }
-        }
 
-        finish();
+            finish();
+        }
     }
 
     private void handlePasswordDialogResult(PasswordDialogResult result, WalletHandle selectedWallet) {
@@ -113,11 +113,9 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
 
             Sign.SignatureData signatureData = Sign.signMessage(messageToSign, credentials.getEcKeyPair());
 
-            byte[] signature = concatByteArrays(
-                    signatureData.getR(),
-                    signatureData.getS(),
-                    signatureData.getV()
-            );
+            String signature = Numeric.toHexStringNoPrefix(signatureData.getR()) +
+                    Numeric.toHexStringNoPrefix(signatureData.getS()) +
+                    Numeric.toHexStringNoPrefix(signatureData.getV());
 
             ContentResolver contentResolver = getContentResolver();
 
@@ -125,7 +123,7 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
             extras.putString(SignatureProvider.KEY_REQUEST_ID, requestId);
             extras.putBoolean(SignatureProvider.KEY_IS_CONFIRMED, true);
             extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ADDRESS, selectedWallet.getAddress());
-            extras.putByteArray(SignatureProvider.KEY_SIGNATURE, signature);
+            extras.putString(SignatureProvider.KEY_SIGNATURE, signature);
 
             try {
                 contentResolver.call(
@@ -141,6 +139,8 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
             }
         } catch (IOException | CipherException e) {
             throw new RuntimeException(e);
+        } finally {
+            finish();
         }
     }
 

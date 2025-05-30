@@ -44,16 +44,11 @@ public class SignatureProvider extends ContentProvider {
 
     private static class PendingRequestData {
         byte[] messageToSign;
-        byte[] signature;
         PendingIntent clientCallbackPendingIntent;
 
         PendingRequestData(byte[] messageToSign, PendingIntent clientCallbackPendingIntent) {
             this.messageToSign = messageToSign;
             this.clientCallbackPendingIntent = clientCallbackPendingIntent;
-        }
-
-        public void setSignature(byte[] signature) {
-            this.signature = signature;
         }
     }
 
@@ -141,6 +136,7 @@ public class SignatureProvider extends ContentProvider {
             String requestId = extras.getString(KEY_REQUEST_ID);
             boolean isConfirmed = extras.getBoolean(KEY_IS_CONFIRMED);
             String selectedWalletId = extras.getString(KEY_SELECTED_WALLET_ADDRESS);
+            String signature = extras.getString(KEY_SIGNATURE);
 
             PendingRequestData requestData = pendingRequests.remove(requestId); // Remove once processed
             if (requestData == null) {
@@ -155,8 +151,6 @@ public class SignatureProvider extends ContentProvider {
                 Intent clientResultIntent = new Intent();
                 if (isConfirmed) {
                     // Perform the actual signing operation securely here
-                    byte[] signature = simulateSigning(originalMessage, selectedWalletId); // Replace with real signing
-
                     clientResultIntent.putExtra(KEY_SIGNATURE_RESULT, signature);
                     Log.d("SignatureProvider", "Message signed for requestId: " + requestId);
                 } else {
