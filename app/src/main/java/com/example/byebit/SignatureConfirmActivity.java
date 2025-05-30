@@ -12,9 +12,19 @@ import com.example.byebit.domain.WalletHandle;
 import com.example.byebit.provider.SignatureProvider;
 import com.example.byebit.repository.WalletRepository;
 import com.example.byebit.ui.dialog.ConfirmationDialogFragment;
+import com.example.byebit.ui.dialog.PasswordDialogResult;
 import com.example.byebit.ui.dialog.WalletUnlockDialogFragment;
 
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Sign;
+import org.web3j.crypto.exception.CipherException;
+import org.web3j.utils.Numeric;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
@@ -55,9 +65,6 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
 
     @Override
     public void onUserConfirmation(boolean confirmed, WalletHandle selectedWallet) {
-        ContentResolver contentResolver = getContentResolver();
-        byte[] signature = null;
-
         if (confirmed) {
             WalletUnlockDialogFragment fragment = WalletUnlockDialogFragment.newInstance(selectedWallet);
 
@@ -65,23 +72,20 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
                     fragment.getDialogEvents()
                             .observeOn(Schedulers.io())
                             .subscribe(result -> {
-                                if (result.isSuccess()) {
-                                    walletRepository.getCredentials(
-                                            selectedWallet,
-                                            result.password
-                                    );
-                                }
+                                this.handlePasswordDialogResult(result, selectedWallet);
                             })
             );
 
 
             fragment.show(getSupportFragmentManager(), "WalletUnlockDialogFragment");
         } else {
+            ContentResolver contentResolver = getContentResolver();
+
             Bundle extras = new Bundle();
             extras.putString(SignatureProvider.KEY_REQUEST_ID, requestId);
             extras.putBoolean(SignatureProvider.KEY_IS_CONFIRMED, confirmed);
-            extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ADDRESS, selectedWallet.getAddress());
-            extras.putByteArray(SignatureProvider.KEY_SIGNATURE, signature);
+            extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ADDRESS, null);
+            extras.putByteArray(SignatureProvider.KEY_SIGNATURE, null);
 
             try {
                 contentResolver.call(
@@ -100,6 +104,66 @@ public class SignatureConfirmActivity extends AppCompatActivity implements Confi
         finish();
     }
 
+    private void handlePasswordDialogResult(PasswordDialogResult result, WalletHandle selectedWallet) {
+        try {
+            Credentials credentials = walletRepository.getCredentials(
+                    selectedWallet,
+                    result.password
+            );
+
+            Sign.SignatureData signatureData = Sign.signMessage(messageToSign, credentials.getEcKeyPair());
+
+            byte[] signature = concatByteArrays(
+                    signatureData.getR(),
+                    signatureData.getS(),
+                    signatureData.getV()
+            );
+
+            ContentResolver contentResolver = getContentResolver();
+
+            Bundle extras = new Bundle();
+            extras.putString(SignatureProvider.KEY_REQUEST_ID, requestId);
+            extras.putBoolean(SignatureProvider.KEY_IS_CONFIRMED, true);
+            extras.putString(SignatureProvider.KEY_SELECTED_WALLET_ADDRESS, selectedWallet.getAddress());
+            extras.putByteArray(SignatureProvider.KEY_SIGNATURE, signature);
+
+            try {
+                contentResolver.call(
+                        SignatureProvider.BASE_URI,
+                        SignatureProvider.METHOD_CONFIRM_SIGNING_RESULT,
+                        null,
+                        extras
+                );
+            } catch (SecurityException e) {
+                Log.e("SignatureConfirmActivity", "Permission denied to call back to provider: " + e.getMessage());
+            } catch (Exception e) {
+                Log.e("SignatureConfirmActivity", "Error calling provider callback: " + e.getMessage());
+            }
+        } catch (IOException | CipherException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static byte[] concatByteArrays(byte[]... arrays) {
+        int totalLength = 0;
+        for (byte[] arr : arrays) {
+            if (arr != null) {
+                totalLength += arr.length;
+            }
+        }
+
+        byte[] result = new byte[totalLength];
+        int currentPos = 0;
+
+        for (byte[] arr : arrays) {
+            if (arr != null) {
+                System.arraycopy(arr, 0, result, currentPos, arr.length);
+                currentPos += arr.length;
+            }
+        }
+
+        return result;
+    }
 
 
     @Override
